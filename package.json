@@ -1,0 +1,41 @@
+{
+  "name": "app_locale",
+  "version": "0.0.3",
+  "description": "Features endpoint for checking/getting info from webpush/charity infrastructure",
+  "main": "app.js",
+  "scripts": {
+    "test": "mocha test/unit",
+    "run": "tsc",
+    "watch": "tsc --watch",
+    "build": "tsc",
+    "lint": "tslint 'app/**/*.ts' --type-check --project tsconfig.json",
+    "doc": "apidoc -i \"app/\" -o \"docs\""
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chai": "^3.5.2",
+    "@types/config": "0.0.32",
+    "@types/koa": "^2.0.39",
+    "@types/mocha": "^2.2.41",
+    "@types/node": "^7.0.23",
+    "@types/request-promise": "^4.1.33",
+    "@types/sinon": "^2.2.1",
+    "@types/string-template": "^1.0.2",
+    "@types/xml2js": "0.0.33",
+    "apidoc": "^0.17.5",
+    "chai": "^3.5.0",
+    "mocha": "^3.3.0",
+    "sinon": "^2.2.0",
+    "tslint": "^5.1.0",
+    "typescript": "^2.2.2"
+  },
+  "dependencies": {
+    "accept-language-parser": "^1.4.0",
+    "config": "^1.25.1",
+    "innots": "0.0.30",
+    "koa-router": "^7.1.1",
+    "pg": "^6.1.5",
+    "pg-pool": "^1.7.1"
+  }
+}
