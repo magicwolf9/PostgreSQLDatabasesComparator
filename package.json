@@ -1,7 +1,7 @@
 {
-  "name": "app_locale",
+  "name": "EnvComparator",
   "version": "0.0.3",
-  "description": "Features endpoint for checking/getting info from webpush/charity infrastructure",
+  "description": "Show differences between 2 tables in production and test databases",
   "main": "app.js",
   "scripts": {
     "test": "mocha test/unit",
