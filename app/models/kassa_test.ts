@@ -183,7 +183,7 @@ export class KassaTestModel {
             {
                 extra_code: "MERCHANT_SITE_EXTERNAL_ID",
                 extra_name: "ИДЕНТИФИКАТОР САЙТА"
-            },
+            }, //"MERCHANT_SITE_EXTERNAL_ID" : "ИДЕНТИФИКАТОР САЙТА
             {
                 extra_code: "ISSUE_DATE",
                 extra_name: "ДАТА ВЫДАЧИ ПАСПОРТА"
