@@ -1,6 +1,6 @@
 import * as Router from 'koa-router';
 import * as config from 'config';
-import {BaseController} from './controllers/baseController';
+import {BaseController} from './controllers/base_controller';
 
 const router = new Router();
 const baseController = new BaseController();
