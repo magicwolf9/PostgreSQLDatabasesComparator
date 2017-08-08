@@ -24,14 +24,39 @@ class Comparator{
     differences: Array<IDifference> = [];
     table1Name: string;
     table2Name: string;
+    primaryKeys: Array<string>;
 
     compareTables(table1Info: ITableInfo, table2Info: ITableInfo): Array<IDifference>{
         this.table1Name = table1Info.tableName;
         this.table2Name = table2Info.tableName;
 
-        //TODO for each row in table1 search same primary in table1
-        //TODO if there are no row with same primary values make difference
-        //TODO if there is a row, then compare rows
+        table1Info.tableData.forEach(row => Comparator.rowDataToMap(row));
+        table2Info.tableData.forEach(row => Comparator.rowDataToMap(row));
+
+        this.primaryKeys = table1Info.primaryKeys;
+
+
+        //for each row in table1 search same primary in table2
+        table1Info.tableData.forEach(row => {
+            const keyColumnsOfRowTable1 = row.filter((key, value) => this.isPrimaryColumn(key, value));
+
+            let hasPairRowWithSamePrimaries: boolean = false;
+
+            table2Info.tableData.forEach(row2 => {
+                const keyColumnsOfRowTable2 = row2.filter((key, value) => this.isPrimaryColumn(key, value));
+
+                //if there is a row, then compare rows
+                if(this.samePrimaryKeysValues(keyColumnsOfRowTable1, keyColumnsOfRowTable2)){
+                    hasPairRowWithSamePrimaries = true;
+                    this.compareRows(row, row2);
+                }
+            });
+
+            //if there are no row with same primary values make difference
+            if(!hasPairRowWithSamePrimaries){
+                //TODO make difference
+            }
+        });
 
         //TODO for each row in table2 search same primary in table1
         //TODO if there are no row with same primary values make difference
@@ -39,24 +64,14 @@ class Comparator{
         return this.differences;
     };
 
-    compareRows(row1Data: Array<any>, row2Data: Array<any>){
+    compareRows(row1HashMap: Array<any>, row2HashMap: Array<any>){
 
         // {[codes], [codes]} {[values], [values]}
         // codes map ---> loop "find" else make a diff
         //                                             if true check values
 
-        const row1Columns: Array<string> = row1Data.map(a => a.extra_code);
-        const row2Columns: Array<string> = row2Data.map(a => a.extra_code);
-
-        // make hashmap column-value
-        const row1HashMap = row1Data.reduce((map, obj) => {
-            map[obj.extra_code] = obj.extra_name;
-            return map;
-        }, {});
-        const row2HashMap = row2Data.reduce((map, obj) => {
-            map[obj.extra_code] = obj.extra_name;
-            return map;
-        }, {});
+        const row1Columns: Array<string> = Object.keys(row1HashMap);
+        const row2Columns: Array<string> = Object.keys(row2HashMap);
 
         const uniqueColumnsInRow1 = row1Columns.filter(val => row2Columns.indexOf(val) == -1);
         const uniqueColumnsInRow2 = row2Columns.filter(val => row1Columns.indexOf(val) == -1);
@@ -118,7 +133,18 @@ class Comparator{
         });
     }
 
-    samePrimaryKeys(primaryKeys1: Array<string>, primaryKeys2: Array<string>): boolean{
+    samePrimaryKeysValues(primaryKeys1: Array<string>, primaryKeys2: Array<string>): boolean{
         return array.differences(primaryKeys1, primaryKeys2).length === 0;
+    }
+
+    static rowDataToMap(row: Array<any>): Array<any> {
+        return row.reduce((map, obj) => {
+            map[obj.extra_code] = obj.extra_name;
+            return map;
+        });
+    }
+
+    isPrimaryColumn(key, value): boolean {
+        return this.primaryKeys.indexOf(key) != -1;
     }
 }
