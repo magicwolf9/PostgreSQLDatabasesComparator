@@ -20,13 +20,13 @@ export interface ITableInfo{
     tableData: Array<any>;
 }
 
-class Comparator{
+export class Comparator{
     differences: Array<IDifference> = [];
     table1Name: string;
     table2Name: string;
     primaryKeys: Array<string>;
 
-    compareTables(table1Info: ITableInfo, table2Info: ITableInfo): Array<IDifference>{
+    public compareTables(table1Info: ITableInfo, table2Info: ITableInfo): Array<IDifference>{
         this.table1Name = table1Info.tableName;
         this.table2Name = table2Info.tableName;
 
@@ -35,31 +35,61 @@ class Comparator{
 
         this.primaryKeys = table1Info.primaryKeys;
 
-
+        const table2RestOfRows = table2Info.tableData;
         //for each row in table1 search same primary in table2
         table1Info.tableData.forEach(row => {
             const keyColumnsOfRowTable1 = row.filter((key, value) => this.isPrimaryColumn(key, value));
 
             let hasPairRowWithSamePrimaries: boolean = false;
 
-            table2Info.tableData.forEach(row2 => {
+            for(let row2 of table2Info.tableData){
                 const keyColumnsOfRowTable2 = row2.filter((key, value) => this.isPrimaryColumn(key, value));
 
                 //if there is a row, then compare rows
-                if(this.samePrimaryKeysValues(keyColumnsOfRowTable1, keyColumnsOfRowTable2)){
+                if(Comparator.samePrimaryKeysValues(keyColumnsOfRowTable1, keyColumnsOfRowTable2)){
                     hasPairRowWithSamePrimaries = true;
                     this.compareRows(row, row2);
+
+                    delete table2RestOfRows[row2];
+                    break;
                 }
-            });
+            }
 
             //if there are no row with same primary values make difference
             if(!hasPairRowWithSamePrimaries){
-                //TODO make difference
+                this.differences[this.differences.length] = {
+                    table1: this.table1Name,
+                    table2: this.table2Name,
+
+                    columnInTable1: '',
+                    columnInTable2: '',
+
+                    rowInTable1: table1Info.tableData.indexOf(row),
+                    rowInTable2: -1,
+
+                    valueInTable1: row,
+                    valueInTable2: '',
+                };
             }
         });
 
-        //TODO for each row in table2 search same primary in table1
-        //TODO if there are no row with same primary values make difference
+        //make differences from rest of lines in table2
+        for(let row of table2RestOfRows){
+            this.differences[this.differences.length] = {
+                table1: this.table1Name,
+                table2: this.table2Name,
+
+                columnInTable1: '',
+                columnInTable2: '',
+
+                rowInTable1: -1,
+                rowInTable2: table2Info.tableData.indexOf(row),
+
+                valueInTable1: '',
+                valueInTable2: row,
+            };
+        }
+
 
         return this.differences;
     };
@@ -133,7 +163,7 @@ class Comparator{
         });
     }
 
-    samePrimaryKeysValues(primaryKeys1: Array<string>, primaryKeys2: Array<string>): boolean{
+    static samePrimaryKeysValues(primaryKeys1: Array<string>, primaryKeys2: Array<string>): boolean{
         return array.differences(primaryKeys1, primaryKeys2).length === 0;
     }
 
