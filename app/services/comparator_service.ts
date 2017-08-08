@@ -36,6 +36,7 @@ export class Comparator{
         this.primaryKeys = table1Info.primaryKeys;
 
         const table2RestOfRows = table2Info.tableData;
+
         //for each row in table1 search same primary in table2
         table1Info.tableData.forEach(row => {
             const keyColumnsOfRowTable1 = row.filter((key, value) => this.isPrimaryColumn(key, value));
