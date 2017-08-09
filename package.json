@@ -36,6 +36,7 @@
     "innots": "0.0.30",
     "koa-router": "^7.1.1",
     "lodash": "^4.17.4",
+    "lodash.isequal": "^4.5.0",
     "pg": "^6.1.5",
     "pg-pool": "^1.7.1"
   }

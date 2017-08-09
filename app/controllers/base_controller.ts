@@ -14,8 +14,8 @@ export class BaseController extends Controller{
         const testTable: ITableInfo = await KassaTestModel.getAll(testTableName, true);
         const prodTable: ITableInfo = await KassaTestModel.getAll(prodTableName, false);
 
-        testTable.primaryKeys = config.get('tablesToCompare')[0].primaryKeys;
-        prodTable.primaryKeys = testTable.primaryKeys;
+        testTable.primaryKeys =  config.get('tablesToCompare')[0].primaryKeys;
+        prodTable.primaryKeys = config.get('tablesToCompare')[0].primaryKeys;
 
         ctx.body = new Comparator().compareTables(testTable, prodTable);
         next();

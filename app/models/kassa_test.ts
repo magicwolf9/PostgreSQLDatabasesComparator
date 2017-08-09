@@ -1,13 +1,13 @@
 import * as config from 'config';
-import {test_pgService} from "../../globals";
-import {prod_pgService} from "../../globals";
+import {testPgService} from "../../globals";
+import {prodPgService} from "../../globals";
 import {ITableInfo} from "../services/comparator_service";
 
 const defaultSchema = config.get('defaultSchema');
 
 export class KassaTestModel {
     static async getAll(tableName: string, isTestDB : boolean): Promise<ITableInfo> {
-        const pgService = isTestDB ? test_pgService : prod_pgService;
+        const pgService = isTestDB ? testPgService : prodPgService;
 
         return {
             tableName: tableName,
@@ -21,7 +21,7 @@ export class KassaTestModel {
                 WHERE  i.indrelid = &1::regclass
                 AND    i.indisprimary;`, [tableName]),
             */
-            tableData: await pgService.getRows(`SELECT * FROM ${defaultSchema}.$1`, [tableName])
+            tableData: await pgService.getRows(`SELECT * FROM ${defaultSchema}.${tableName}`, [])
         };
     }
 
