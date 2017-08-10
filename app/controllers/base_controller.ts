@@ -6,6 +6,7 @@ import {Comparator, ITableInfo} from "../services/comparator_service";
 
 
 export class BaseController extends Controller{
+
     table = async (ctx: Context, next: () => any): Promise<void> => {
 
         const testTableName = config.get('tablesToCompare')[0].tableName;

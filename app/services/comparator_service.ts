@@ -1,18 +1,18 @@
+
 var _ = require('lodash/array');
 var isEqual = require('lodash.isequal');
 
 export interface IDifference {
-    table1: string;
-    table2: string;
+    type: string;
 
-    columnInTable1: string;
-    columnInTable2: string;
+    schema?: string;
+    table: string;
 
-    rowInTable1: number;
-    rowInTable2: number;
+    columnsInTest?: Array<string>;
+    columnsInProd?: Array<string>;
 
-    valueInTable1: any;
-    valueInTable2: any;
+    valueInTest?: any;
+    valueInProd?: any;
 }
 
 export interface ITableInfo{
@@ -22,112 +22,84 @@ export interface ITableInfo{
 }
 
 export class Comparator{
+    NO_SUCH_ROW: string = 'There is no row with same values';
+    NO_SUCH_COLUMN: string = 'There is no such column';
+    DIFFERENT_VALUES: string = 'Values in rows differ';
+    TEST_SCHEMA: string = 'test';
+    PROD_SCHEMA: string = 'production';
+
     differences: Array<IDifference> = [];
-    table1Name: string;
-    table2Name: string;
+    tableName: string;
     primaryKeys: Array<string>;
 
-    public compareTables(table1Info: ITableInfo, table2Info: ITableInfo): Array<IDifference>{
-        this.table1Name = table1Info.tableName;
-        this.table2Name = table2Info.tableName;
+    public compareTables(tableTestInfo: ITableInfo, tableProdInfo: ITableInfo): Array<IDifference>{
+        this.tableName = tableTestInfo.tableName;
 
-        console.log(table1Info);
+        console.log(tableTestInfo);
 
         //TODO edit data according to settings: search by primary / search by same values/ ignore primary
 
-        this.primaryKeys = table1Info.primaryKeys;
+        this.primaryKeys = tableTestInfo.primaryKeys;
 
-        const table2RestOfRows = table2Info.tableData;
-
-        table1Info.tableData.forEach(row => {
-            console.log(row);
-
+        tableTestInfo.tableData.forEach(rowTest => {
             //TODO if need get row from table2 by primaries
             // const row2 = this.findWithSamePrimaries(row, table2Info);
 
-            const row2 = this.findWithSameValues(row, table2Info);
+            const rowProd = this.findWithSameValues(rowTest, tableProdInfo);
 
-            if(!row2){
-                this.differences[this.differences.length] = {
-                    table1: this.table1Name,
-                    table2: this.table2Name,
-
-                    columnInTable1: '',
-                    columnInTable2: '',
-
-                    rowInTable1: table1Info.tableData.indexOf(row),
-                    rowInTable2: -1,
-
-                    valueInTable1: row,
-                    valueInTable2: '',
-                };
+            if(!rowProd){
+                this.differences[this.differences.length] = this.generateNoSuchRowDiff(rowTest, this.PROD_SCHEMA)
+            } else {
+                delete tableProdInfo.tableData[tableProdInfo.tableData.indexOf(rowProd)];
+                tableProdInfo.tableData = tableProdInfo.tableData.filter(Boolean);
             }
-
-            delete table2RestOfRows[table2RestOfRows.indexOf(row2)];
-
             //if was found by primaries this.compareRows(row, row2);
         });
 
         //make differences from rest of lines in table2
-        for (let row of table2RestOfRows) {
-            this.differences[this.differences.length] = {
-                table1: this.table1Name,
-                table2: this.table2Name,
-
-                columnInTable1: '',
-                columnInTable2: '',
-
-                rowInTable1: -1,
-                rowInTable2: table2Info.tableData.indexOf(row),
-
-                valueInTable1: '',
-                valueInTable2: row,
-            };
+        for (let row of tableProdInfo.tableData) {
+            this.differences[this.differences.length] = this.generateNoSuchRowDiff(row, this.TEST_SCHEMA)
         }
 
         return this.differences;
     };
 
-    findWithSamePrimaries(row: Array<any>, secondTableInfo: ITableInfo): Array<any> {
-        let keyColumnsOfRowTable1 = new Map<string, string>();
+    findWithSamePrimaries(rowTest: Array<any>, prodTableInfo: ITableInfo): Array<any> {
+        let keyColumnsOfRowTest = new Map<string, string>();
 
-        console.log(Object.keys(row));
-        Object.keys(row).forEach(key => {
-            if(this.isPrimaryColumn(key)) keyColumnsOfRowTable1.set(key, row[key]);
+        console.log(Object.keys(rowTest));
+        Object.keys(rowTest).forEach(key => {
+            if(this.isPrimaryColumn(key)) keyColumnsOfRowTest.set(key, rowTest[key]);
         });
 
-        console.log(keyColumnsOfRowTable1);
+        console.log(keyColumnsOfRowTest);
 
-        for(let row2 of secondTableInfo.tableData){
-            console.log(row2);
+        for(let rowProd of prodTableInfo.tableData){
+            console.log(rowProd);
 
-            let keyColumnsOfRowTable2 = new Map<string, string>();
+            let keyColumnsOfRowProd = new Map<string, string>();
 
-            Object.keys(row2).forEach(key => {
-                if(this.isPrimaryColumn(key)) keyColumnsOfRowTable2.set(key, row2[key]);
+            Object.keys(rowProd).forEach(key => {
+                if(this.isPrimaryColumn(key)) keyColumnsOfRowProd.set(key, rowProd[key]);
             });
 
-            console.log(keyColumnsOfRowTable2);
+            console.log(keyColumnsOfRowProd);
 
-            if(Comparator.samePrimaryKeysValues(keyColumnsOfRowTable1, keyColumnsOfRowTable2)){
-                return row2;
+            if(this.samePrimaryKeysValues(keyColumnsOfRowTest, keyColumnsOfRowProd)){
+                return rowProd;
             }
         }
         return null;
     }
 
-    findWithSameValues(row1: Array<any>, secondTableInfo: ITableInfo): Array<any> {
+    findWithSameValues(rowTest: Array<any>, prodTableInfo: ITableInfo): Array<any> {
 
-        //const row1 = Comparator.rowDataToMap(row);
-
-        for(let row2 of secondTableInfo.tableData){
-            console.log(row2);
-            //row2 = Comparator.rowDataToMap(row2);
+        for(let row2 of prodTableInfo.tableData){
 
             let valuesEquals: boolean = true;
-            Object.keys(row1).forEach((key: string) => {
+            Object.keys(rowTest).forEach((key: string) => {
 
-                if(row2[key] != row1[key]){
+                if(row2[key] != rowTest[key]){
                     valuesEquals = false;
                 }
             });
@@ -137,79 +109,78 @@ export class Comparator{
         return null;
     }
 
-    compareRows(row1: Array<any>, row2: Array<any>){
+    compareRows(rowTest: Array<any>, rowProd: Array<any>){
+/*
 
-        const row1HashMap = Comparator.rowDataToMap(row1);
-        const row2HashMap = Comparator.rowDataToMap(row2);
+        const row1HashMap = this.rowDataToMap(row1);
+        const row2HashMap = this.rowDataToMap(row2);
+*/
 
-        const row1Columns: Array<string> = Object.keys(row1HashMap);
-        const row2Columns: Array<string> = Object.keys(row2HashMap);
+        const row1Columns: Array<string> = Object.keys(rowTest);
+        const row2Columns: Array<string> = Object.keys(rowProd);
 
-        const uniqueColumnsInRow1 = row1Columns.filter(val => row2Columns.indexOf(val) == -1);
-        const uniqueColumnsInRow2 = row2Columns.filter(val => row1Columns.indexOf(val) == -1);
+        const uniqueColumnsInTest = row1Columns.filter(val => row2Columns.indexOf(val) == -1);
+        const uniqueColumnsInProd = row2Columns.filter(val => row1Columns.indexOf(val) == -1);
 
-        // make differences from unique columns and delete them from hashmap
-        uniqueColumnsInRow1.forEach(columnName => {
-            this.differences[this.differences.length] = {
-                table1: this.table1Name,
-                table2: this.table2Name,
-
-                columnInTable1: columnName,
-                columnInTable2: '',
-
-                rowInTable1: -1,
-                rowInTable2: -1,
-
-                valueInTable1: row1HashMap[columnName],
-                valueInTable2: '',
-            };
-            delete row1HashMap[columnName];
-        });
-
-        uniqueColumnsInRow2.forEach(columnName => {
-            this.differences[this.differences.length] = {
-                table1: this.table1Name,
-                table2: this.table2Name,
-
-                columnInTable1: '',
-                columnInTable2: columnName,
-
-                rowInTable1: -1,
-                rowInTable2: -1,
-
-                valueInTable1: '',
-                valueInTable2: row2HashMap[columnName],
-            };
-            delete row2HashMap[columnName];
-        });
+        if(uniqueColumnsInTest.length > 0 || uniqueColumnsInProd.length > 0) {
+            this.differences[this.differences.length] = this.generateNoSuchColumns(uniqueColumnsInTest, uniqueColumnsInProd)
+        }
 
         // check columns for equal values, make differences is not
-        Object.keys(row1HashMap).forEach((key: string) => {
-            const value = row1HashMap[key];
+        Object.keys(rowTest).forEach((key: string) => {
+            const value = rowTest[key];
 
-            if(row2HashMap[key] != value){
-                this.differences[this.differences.length] = {
-                    table1: this.table1Name,
-                    table2: this.table2Name,
-
-                    columnInTable1: key,
-                    columnInTable2: key,
-
-                    rowInTable1: 1,
-                    rowInTable2: 1,
-
-                    valueInTable1: value,
-                    valueInTable2: row2HashMap[key],
-                };
+            //TODO change because diff for each not equal value is too much
+            if(uniqueColumnsInTest.indexOf(key) === -1 && rowProd[key] != value){
+                this.differences[this.differences.length] = this.generateDifferentValuesDiff(rowTest, rowProd);
             }
         });
     }
 
-    static samePrimaryKeysValues(primaryKeysValues1: Map<string, string>, primaryKeysValues2: Map<string, string>): boolean{
+    generateDifferentValuesDiff(rowTest: Array<any>, rowProd: Array<any>): IDifference {
+        return {
+            type: this.DIFFERENT_VALUES,
+
+            table: this.tableName,
+
+            valueInTest: rowTest,
+            valueInProd: rowProd,
+        };
+    }
+    generateNoSuchRowDiff(row: Array<any>, schema: string): IDifference{
+        let valueInTest = schema === this.TEST_SCHEMA ? null : row;
+        let valueInProd = null;
+        if(valueInTest === null) {
+            valueInProd = row;
+        }
+
+        return {
+            type: this.NO_SUCH_ROW,
+
+            schema: schema,
+            table: this.tableName,
+
+            valueInTest: valueInTest,
+            valueInProd: valueInProd,
+        };
+    }
+
+    generateNoSuchColumns(uniqueColumnsTest: Array<string>, uniqueColumnsProd: Array<string>): IDifference {
+        return {
+            type: this.NO_SUCH_COLUMN,
+
+            table: this.tableName,
+
+            columnsInTest: uniqueColumnsTest,
+            columnsInProd: uniqueColumnsProd,
+        }
+    }
+
+    samePrimaryKeysValues(primaryKeysValues1: Map<string, string>, primaryKeysValues2: Map<string, string>): boolean{
         return isEqual(primaryKeysValues1, primaryKeysValues2);
     }
 
-    static rowDataToMap(row: Array<any>): Map<string, string> {
+    rowDataToMap(row: Array<any>): Map<string, string> {
         const rowMap = new Map();
         row.forEach(function(obj){
             rowMap.set(obj[0], obj[1]);
