@@ -8,7 +8,6 @@ export class TablePrimariyKeysModel {
     static async getPrimaries(tableName: string, isTestDB: boolean): Promise<Array<string>> {
         const pgService = isTestDB ? testPgService : prodPgService;
 
-        console.log("getting keys");
         return await pgService.getRows(`
                 SELECT a.attname
                 FROM   pg_index i

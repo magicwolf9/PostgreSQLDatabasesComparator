@@ -31,7 +31,6 @@ export class BaseController extends Controller{
 
         for(let i of newTablesToCompare) {
 
-            console.log(i);
             const tableName = i;
 
             const testTable: ITableInfo = await TableDataModel.getData(tableName, true);
@@ -46,7 +45,7 @@ export class BaseController extends Controller{
         ctx.body = differences;
         next();
     };
-//ref_*
+
     getFullTablesToCompare(listOfTables: Array<string>, listToCompareWithShortcuts: Array<string>): Array<string>{
         let tablesToCompareFull: Array<string> = [];
 
@@ -54,7 +53,6 @@ export class BaseController extends Controller{
             if (tableName.endsWith('*')) {
                 //table name is a shortcut (example: ref_*)
                 tablesToCompareFull = tablesToCompareFull.concat(this.getTablesNamesFromShortcut(tableName, listOfTables));
-                console.log(tablesToCompareFull);
             } else {
                 tablesToCompareFull = tablesToCompareFull.concat(tableName);
             }

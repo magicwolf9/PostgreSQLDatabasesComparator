@@ -9,7 +9,6 @@ export class TableDataModel {
     static async getData(tableName: string, isTestDB : boolean): Promise<ITableInfo> {
         const pgService = isTestDB ? testPgService : prodPgService;
 
-        console.log("getting data");
         return {
             tableName: tableName,
             primaryKeys: [],

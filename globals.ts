@@ -12,9 +12,5 @@ const testPgService = new PgService(test_pool);
 const prodPgService = new PgService(prod_pool);
 /* tslint:enable */
 
-
-const test_logger = innoLogger.getLogger(config);
-const prod_logger = innoLogger.getLogger(config);
-
-export {testPgService, test_logger};
-export {prodPgService, prod_logger};
+const logger = innoLogger.getLogger(config);
+export {testPgService, prodPgService, logger};
