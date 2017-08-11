@@ -1,6 +1,4 @@
-
-var _ = require('lodash/array');
-var isEqual = require('lodash.isequal');
+import * as _ from 'lodash';
 
 export interface IDifference {
     type: string;
@@ -22,13 +20,14 @@ export interface ITableInfo{
 }
 
 export class Comparator{
-    NO_SUCH_ROW: string = 'There is no row with same values';
+    NO_SUCH_TABLE: string = 'There is no table with given name';
     NO_SUCH_COLUMN: string = 'There is no such column';
+    NO_SUCH_ROW: string = 'There is no row with same values';
     DIFFERENT_VALUES: string = 'Values in rows differ';
     TEST_SCHEMA: string = 'test';
     PROD_SCHEMA: string = 'production';
 
-    differences: Array<IDifference> = [];
+    myDifferences: Array<IDifference> = [];
     tableName: string;
     primaryKeys: Array<string>;
 
@@ -38,6 +37,17 @@ export class Comparator{
         console.log(tableTestInfo);
 
         //TODO edit data according to settings: search by primary / search by same values/ ignore primary
+        /*if(searchByPrimary){
+            // forEach this.findWithSamePrimaries();
+        } else{
+            if(ignorePrimary) {
+                //TODO delete primary columns with values
+            }
+            // forEach this.findWithSameValues()
+        }*/
+
+
+        //TODO check if all column exist in 2 tables, if no --> make diff and delete values from rows, but save them for generating sql
 
         this.primaryKeys = tableTestInfo.primaryKeys;
 
@@ -48,7 +58,7 @@ export class Comparator{
             const rowProd = this.findWithSameValues(rowTest, tableProdInfo);
 
             if(!rowProd){
-                this.differences[this.differences.length] = this.generateNoSuchRowDiff(rowTest, this.PROD_SCHEMA)
+                this.myDifferences = this.myDifferences.concat(this.generateNoSuchRowDiff(rowTest, this.PROD_SCHEMA));
             } else {
                 delete tableProdInfo.tableData[tableProdInfo.tableData.indexOf(rowProd)];
                 tableProdInfo.tableData = tableProdInfo.tableData.filter(Boolean);
@@ -58,10 +68,10 @@ export class Comparator{
 
         //make differences from rest of lines in table2
         for (let row of tableProdInfo.tableData) {
-            this.differences[this.differences.length] = this.generateNoSuchRowDiff(row, this.TEST_SCHEMA)
+            this.myDifferences = this.myDifferences.concat(this.generateNoSuchRowDiff(row, this.TEST_SCHEMA));
         }
 
-        return this.differences;
+        return this.myDifferences;
     };
 
     findWithSamePrimaries(rowTest: Array<any>, prodTableInfo: ITableInfo): Array<any> {
@@ -123,18 +133,18 @@ export class Comparator{
         const uniqueColumnsInProd = row2Columns.filter(val => row1Columns.indexOf(val) == -1);
 
         if(uniqueColumnsInTest.length > 0 || uniqueColumnsInProd.length > 0) {
-            this.differences[this.differences.length] = this.generateNoSuchColumns(uniqueColumnsInTest, uniqueColumnsInProd)
+            this.myDifferences = this.myDifferences.concat(this.generateNoSuchColumns(uniqueColumnsInTest, uniqueColumnsInProd));
         }
 
         // check columns for equal values, make differences is not
-        Object.keys(rowTest).forEach((key: string) => {
+        for(let key of Object.keys(rowTest)){
             const value = rowTest[key];
 
-            //TODO change because diff for each not equal value is too much
             if(uniqueColumnsInTest.indexOf(key) === -1 && rowProd[key] != value){
-                this.differences[this.differences.length] = this.generateDifferentValuesDiff(rowTest, rowProd);
+                this.myDifferences = this.myDifferences.concat(this.generateDifferentValuesDiff(rowTest, rowProd));
+                break;
             }
-        });
+        }
     }
 
     generateDifferentValuesDiff(rowTest: Array<any>, rowProd: Array<any>): IDifference {
@@ -147,6 +157,7 @@ export class Comparator{
             valueInProd: rowProd,
         };
     }
+
     generateNoSuchRowDiff(row: Array<any>, schema: string): IDifference{
         let valueInTest = schema === this.TEST_SCHEMA ? null : row;
         let valueInProd = null;
@@ -176,8 +187,17 @@ export class Comparator{
         }
     }
 
+    generateNoSuchTable(tableName: string, schema: string): IDifference {
+        return {
+            type: this.NO_SUCH_TABLE,
+
+            schema: schema,
+            table: tableName
+        }
+    }
+
     samePrimaryKeysValues(primaryKeysValues1: Map<string, string>, primaryKeysValues2: Map<string, string>): boolean{
-        return isEqual(primaryKeysValues1, primaryKeysValues2);
+        return _.isEqual(primaryKeysValues1, primaryKeysValues2);
     }
 
     rowDataToMap(row: Array<any>): Map<string, string> {
@@ -191,5 +211,27 @@ export class Comparator{
     isPrimaryColumn(key: string): boolean {
         console.log(key);
         return this.primaryKeys.indexOf(key) != -1;
+    }
+
+    compareListOfTablesNamesAndMakeDiffs(testTables: Array<string>, prodTables: Array<string>): [Array<string>, Array<IDifference>]{
+        let differences: Array<IDifference> = [];
+
+        let schema: string;
+
+        //making testTables equals prodTables and making diffs
+        _.difference(testTables, prodTables).forEach(tableName => {
+
+            if (testTables.indexOf(tableName) != -1) {
+                schema = this.TEST_SCHEMA;
+                testTables.splice(testTables.indexOf(tableName), 1);
+            } else {
+                schema = this.PROD_SCHEMA;
+                prodTables.splice(prodTables.indexOf(tableName), 1);
+            }
+
+            differences = differences.concat(this.generateNoSuchTable(tableName, schema));
+        });
+
+        return [testTables, differences];
     }
 }

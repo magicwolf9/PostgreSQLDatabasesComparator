@@ -4,7 +4,7 @@ import * as chai from 'chai';
 const assert = chai.assert;
 
 const comparator = new Comparator();
-comparator.tableName = "table";
+comparator.tableName = "differences";
 
 
 describe('Comparator', function () {

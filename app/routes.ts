@@ -16,6 +16,6 @@ const baseController = new BaseController();
  * @apiError {Any} error Текст/код ошибки сервиса.
  */
 router
-   .get(config.get('url') + 'differences', baseController.table);
+   .get(config.get('url') + 'differences', baseController.differences);
 
 export {router};
