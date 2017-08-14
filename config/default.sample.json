@@ -20,14 +20,19 @@
         "user": "*",
         "password": "*"
     },
-    "tablesToCompare": [
-        {
-            "tableName": "",
-            "primaryKeys": [
-                "*", "*"
-            ]
-        }
-    ],
+    "comparator_settings": {
+        "tablesToCompare": [
+            "***", "***"
+        ],
+        "overrideDefaultSettings": [
+            {
+                "table_name": {
+                    "searchByPrimaries": false,
+                    "deletePrimaries": false
+                }
+            }
+        ]
+    },
     "allowedApplicationCodes": ["KASSA", "CHECKOUT"],
     "codeValidationRegexp": "^[a-zA-Z0-9_]*$"
 }

@@ -1,36 +1,136 @@
+import {IDifference} from "../app/services/diffGenerator_service";
+
 var comparator_service = require("../app/services/comparator_service");
-import {Comparator, IDifference} from "../app/services/comparator_service";
+import {Comparator} from "../app/services/comparator_service";
 import * as chai from 'chai';
 const assert = chai.assert;
 
-const comparator = new Comparator();
-comparator.tableName = "differences";
+import {TEST_SCHEMA} from "../globals";
+import {PROD_SCHEMA} from "../globals";
 
+import {NO_SUCH_TABLE} from "../globals";
+import {NO_SUCH_COLUMN} from "../globals";
+import {NO_SUCH_ROW} from "../globals";
+import {DIFFERENT_VALUES} from "../globals";
+
+const comparator = new Comparator();
+const tableName = "table";
+comparator.tableName = tableName;
+comparator.diffGenerator.tableName = tableName;
 
 describe('Comparator', function () {
 
-    describe.skip('Comparator.compareRows', function () {
+    describe('Comparator.compareRows', function () {
 
-        it('should return diff about not found column', function (){
-            const row1 = {column: 'value', column2: 'value2'};
-            const row2 = {column: 'value'};
+        it('should create diff about not found column', function (){
+            const rowTest: any = {column: 'value', column2: 'value2'};
+            const rowProd: any = {column: 'value'};
 
-            /*const expectedDiff: IDifference = {
-                type: "",
+            let expectedDiff: IDifference = {
+                type: NO_SUCH_COLUMN,
 
-                table1: 'table1',
-                table2: 'table2',
+                table: tableName,
 
-                columnsInTest: 'column2',
-                columnsInProd: '',
+                columnsInTest: ['column2'],
+                columnsInProd: []
+            };
 
-                valueInTest: 'value2',
-                valueInProd: '',
-            }*/
+            comparator.compareRows(rowTest, rowProd);
 
-
-            //TODO check result and expected diff
+            chai.expect(comparator.myDifferences).to.eql([expectedDiff]);
+            comparator.myDifferences = [];
         });
+
+        it('should create diff about not equals values', function (){
+            const rowTest: any = {column: 'value'};
+            const rowProd: any = {column: 'value1'};
+
+            const expectedDiff: IDifference = {
+                type: DIFFERENT_VALUES,
+
+                table: tableName,
+
+                valueInTest: rowTest,
+                valueInProd: rowProd,
+            };
+
+            comparator.compareRows(rowTest, rowProd);
+
+            chai.expect(comparator.myDifferences).to.eql([expectedDiff]);
+            comparator.myDifferences = [];
+        });
+
+        it('should create diff about not equals values', function (){
+            const rowTest: any = {column: 'value', column2: 'value'};
+            const rowProd: any = {column: 'value', column2: 'value2'};
+
+            const expectedDiff: IDifference = {
+                type: DIFFERENT_VALUES,
+
+                table: tableName,
+
+                valueInTest: rowTest,
+                valueInProd: rowProd,
+            };
+
+            comparator.compareRows(rowTest, rowProd);
+
+            chai.expect(comparator.myDifferences).to.eql([expectedDiff]);
+            comparator.myDifferences = [];
+        });
+
+        it('should create diff about not found column and different values', function (){
+            const rowTest: any = {column: 'value', column2: 'value2'};
+            const rowProd: any = {column: 'value3'};
+
+            const expectedDiffs: IDifference[] = [{
+                type: NO_SUCH_COLUMN,
+
+                table: tableName,
+
+                columnsInTest: ['column2'],
+                columnsInProd: []
+            }, {
+                type: DIFFERENT_VALUES,
+
+                table: tableName,
+
+                valueInTest: rowTest,
+                valueInProd: rowProd,
+            }];
+
+            comparator.compareRows(rowTest, rowProd);
+
+            chai.expect(comparator.myDifferences).to.eql(expectedDiffs);
+            comparator.myDifferences = [];
+        });
+
+        it('should create diff about not found columns and different values', function (){
+            const rowTest: any = {column: 'value', column2: 'value2', column3: 'value3'};
+            const rowProd: any = {column: 'value3'};
+
+            const expectedDiffs: IDifference[] = [{
+                type: NO_SUCH_COLUMN,
+
+                table: tableName,
+
+                columnsInTest: ['column2', 'column3'],
+                columnsInProd: []
+            }, {
+                type: DIFFERENT_VALUES,
+
+                table: tableName,
+
+                valueInTest: rowTest,
+                valueInProd: rowProd,
+            }];
+
+            comparator.compareRows(rowTest, rowProd);
+
+            chai.expect(comparator.myDifferences).to.eql(expectedDiffs);
+            comparator.myDifferences = [];
+        });
+
     });
 
 
@@ -157,6 +257,83 @@ describe('Comparator', function () {
             comparator.primaryKeys = [];
 
             assert.isFalse(comparator.isPrimaryColumn(''));
+        });
+    });
+
+    describe('Comparator.compareListOfTablesNamesAndMakeDiffs', function () {
+
+
+        it('should return empty diffs array on equal values and order in arrays', function (){
+            comparator.primaryKeys = ['key1'];
+
+            const testTables = ['table1', 'table2', 'table3'];
+            const prodTables = ['table1', 'table2', 'table3'];
+
+            let finalListOfTables: Array<string>;
+            let differences: IDifference[];
+            [finalListOfTables, differences] = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
+
+            chai.expect([finalListOfTables, differences]).to.eql([testTables,[]]);
+        });
+
+        it('should return empty diffs array on equal values in arrays but different order', function (){
+            comparator.primaryKeys = ['key1'];
+
+            const testTables = ['table1', 'table3', 'table2'];
+            const prodTables = ['table2', 'table1', 'table3'];
+
+            let finalListOfTables: Array<string>;
+            let differences: IDifference[];
+            [finalListOfTables, differences] = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
+
+            chai.expect([finalListOfTables, differences]).to.eql([testTables,[]]);
+        });
+
+        it('should return edited list of tables and one diff on different values in arrays', function (){
+            comparator.primaryKeys = ['key1'];
+
+            const testTables = ['table1', 'table3', 'table2'];
+            const prodTables = ['table2', 'table1'];
+
+            const expectedDiff: IDifference = {
+                type: NO_SUCH_TABLE,
+
+                schema: PROD_SCHEMA,
+                table: 'table3'
+            };
+            const expectedTables = ['table1', 'table2'];
+
+            let finalListOfTables: Array<string>;
+            let differences: IDifference[];
+            [finalListOfTables, differences] = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
+
+            chai.expect([finalListOfTables, differences]).to.eql([expectedTables,[expectedDiff]]);
+        });
+
+        it('should return edited list of tables and diffs on different values in arrays', function (){
+            comparator.primaryKeys = ['key1'];
+
+            const testTables = ['table1', 'table3', 'table2'];
+            const prodTables = ['table2', 'table1', 'table4'];
+
+            const expectedDiff: IDifference[] = [{
+                type: NO_SUCH_TABLE,
+
+                schema: PROD_SCHEMA,
+                table: 'table3'
+            }, {
+                type: NO_SUCH_TABLE,
+
+                schema: TEST_SCHEMA,
+                table: 'table4'
+            }];
+            const expectedTables = ['table1', 'table2'];
+
+            let finalListOfTables: Array<string>;
+            let differences: IDifference[];
+            [finalListOfTables, differences] = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
+
+            chai.expect([finalListOfTables, differences]).to.eql([expectedTables, expectedDiff]);
         });
     });
 });
