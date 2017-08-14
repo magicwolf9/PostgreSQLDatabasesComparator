@@ -4,7 +4,7 @@
   "description": "Show differences between 2 tables in production and test databases",
   "main": "app.js",
   "scripts": {
-    "test": "mocha test/unit",
+    "test": "mocha test",
     "run": "tsc",
     "watch": "tsc --watch",
     "build": "tsc",
@@ -37,6 +37,7 @@
     "koa-router": "^7.1.1",
     "lodash": "^4.17.4",
     "pg": "^6.1.5",
-    "pg-pool": "^1.7.1"
+    "pg-pool": "^1.7.1",
+    "ts-node": "^3.3.0"
   }
 }

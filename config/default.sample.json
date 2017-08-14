@@ -1,0 +1,33 @@
+{
+    "defaultSchema": "kassa",
+    "defaultLocale": "RU",
+    "port": 8089,
+    "url": "/comparator/",
+    "logLevel": "DEBUG",
+    "generalAppCode": "ALL",
+    "generalAppDefaultErrorCode": "ALL",
+    "test_db": {
+        "host": "*",
+        "port": 5432,
+        "database": "*",
+        "user": "*",
+        "password": "*"
+    },
+    "prod_db": {
+        "host": "*",
+        "port": 5432,
+        "database": "*",
+        "user": "*",
+        "password": "*"
+    },
+    "tablesToCompare": [
+        {
+            "tableName": "",
+            "primaryKeys": [
+                "*", "*"
+            ]
+        }
+    ],
+    "allowedApplicationCodes": ["KASSA", "CHECKOUT"],
+    "codeValidationRegexp": "^[a-zA-Z0-9_]*$"
+}
