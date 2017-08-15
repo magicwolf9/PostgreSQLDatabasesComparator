@@ -5,12 +5,14 @@ import {TableDataModel} from "../models/table_data";
 import {Comparator, IComparatorSettings, ITableInfo} from "../services/comparator_service";
 import {TablePrimariyKeysModel} from "../models/table_keys";
 import {ListTablesNamesModel} from "../models/list_tables";
-import {IDifference} from "../services/diffGenerator_service";
+import {IDifference} from "../services/diff_generator_service";
+import {TextDiffGenerator} from "../services/text_difference_generator_service";
 
 
 export class BaseController extends Controller{
 
     comparator = new Comparator();
+    //textDiffsGenerator = new TextDiffGenerator();
 
     differences = async (ctx: Context, next: () => any): Promise<void> => {
 
@@ -42,6 +44,7 @@ export class BaseController extends Controller{
             differences = this.comparator.compareTables(testTable, prodTable, this.getComparatorSettingsForTable(tableName));
         }
 
+        //ctx.body = this.textDiffsGenerator.generateTexts(differences);
         ctx.body = differences;
         next();
     };
@@ -49,7 +52,7 @@ export class BaseController extends Controller{
     getComparatorSettingsForTable(tableName: string): IComparatorSettings{
         const defaultSettings: IComparatorSettings = {
             searchByPrimaries: true,
-            deletePrimaries: false
+            ignorePrimaries: false
         };
 
         const tablesWithOverriddenSettings: Array<any> = config.get('comparator_settings.overrideDefaultSettings');

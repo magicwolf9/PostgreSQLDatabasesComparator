@@ -1,33 +1,440 @@
-import {IDifference} from "../app/services/diffGenerator_service";
+import {DiffGenerator, IDifference} from "../app/services/diff_generator_service";
 
 var comparator_service = require("../app/services/comparator_service");
-import {Comparator} from "../app/services/comparator_service";
+import {Comparator, IComparatorSettings, ITableInfo} from "../app/services/comparator_service";
 import * as chai from 'chai';
 const assert = chai.assert;
 
 import {TEST_SCHEMA} from "../globals";
 import {PROD_SCHEMA} from "../globals";
 
-import {NO_SUCH_TABLE} from "../globals";
-import {NO_SUCH_COLUMN} from "../globals";
-import {NO_SUCH_ROW} from "../globals";
-import {DIFFERENT_VALUES} from "../globals";
-
-const comparator = new Comparator();
+let comparator = new Comparator();
 const tableName = "table";
 comparator.tableName = tableName;
 comparator.diffGenerator.tableName = tableName;
 
+function clearComparator(){
+    comparator = new Comparator();
+
+    const tableName = "table";
+    comparator.tableName = tableName;
+    comparator.diffGenerator.tableName = tableName;
+
+    comparator.uniqueColumnsInTest = [];
+    comparator.uniqueColumnsInProd = [];
+}
+
 describe('Comparator', function () {
 
+    describe('Comparator.compareTables', function () {
+
+        beforeEach(clearComparator);
+
+        it('should return no diff on equal tables values', function () {
+
+            const tableTestInfo: ITableInfo = {
+
+                tableName: "table",
+                primaryKeys: ['column'],
+                tableData: [
+                    {column2: 'value4', column: 'value3'},
+                    {column: 'value', column2: 'value2'}
+                ]
+            };
+
+            const tableProdInfo: ITableInfo = {
+
+                tableName: "table",
+                primaryKeys: ['column'],
+                tableData: [
+                    {column2: 'value2', column: 'value'},
+                    {column: 'value3', column2: 'value4'}
+                ]
+            };
+
+            const comparatorSettings: IComparatorSettings = {
+                searchByPrimaries: true,
+                ignorePrimaries: false
+            };
+
+            chai.expect(comparator.compareTables(tableTestInfo, tableProdInfo, comparatorSettings)).to.eql([]);
+        });
+
+        it('should return no diff on equal tables values with settings to search by values', function () {
+
+            const tableTestInfo: ITableInfo = {
+
+                tableName: "table",
+                primaryKeys: ['column'],
+                tableData: [
+                    {column2: 'value4', column: 'value3'},
+                    {column: 'value', column2: 'value2'}
+                ]
+            };
+
+            const tableProdInfo: ITableInfo = {
+
+                tableName: "table",
+                primaryKeys: ['column'],
+                tableData: [
+                    {column2: 'value2', column: 'value'},
+                    {column: 'value3', column2: 'value4'}
+                ]
+            };
+
+            const comparatorSettings: IComparatorSettings = {
+                searchByPrimaries: false,
+                ignorePrimaries: false
+            };
+
+            chai.expect(comparator.compareTables(tableTestInfo, tableProdInfo, comparatorSettings)).to.eql([]);
+        });
+
+        it('should return no diff on equal tables values with setting to delete primary', function () {
+
+            const tableTestInfo: ITableInfo = {
+
+                tableName: "table",
+                primaryKeys: ['column'],
+                tableData: [
+                    {column2: 'value4', column: 'value3', column3: 'value5'},
+                    {column: 'value', column2: 'value2', column3: 'value3'}
+                ]
+            };
+
+            const tableProdInfo: ITableInfo = {
+
+                tableName: "table",
+                primaryKeys: ['column'],
+                tableData: [
+                    {column2: 'value2', column: 'value--', column3: 'value3'},
+                    {column: 'value-', column2: 'value4', column3: 'value5'}
+                ]
+            };
+
+            const comparatorSettings: IComparatorSettings = {
+                searchByPrimaries: false,
+                ignorePrimaries: true
+            };
+
+            chai.expect(comparator.compareTables(tableTestInfo, tableProdInfo, comparatorSettings)).to.eql([]);
+        });
+
+        it('should return diff on different tables values', function () {
+
+            const tableTestInfo: ITableInfo = {
+
+                tableName: "table",
+                primaryKeys: ['column'],
+                tableData: [
+                    {column2: 'value4', column: 'value3'},
+                    {column: 'value', column2: 'value2'}
+                ]
+            };
+
+            const tableProdInfo: ITableInfo = {
+
+                tableName: "table",
+                primaryKeys: ['column'],
+                tableData: [
+                    {column2: 'value4', column: 'value3'},
+                    {column: 'value', column2: 'value4'}
+                ]
+            };
+
+            const comparatorSettings: IComparatorSettings = {
+                searchByPrimaries: true,
+                ignorePrimaries: false
+            };
+
+            const expectedDiff: IDifference = {
+                type: DiffGenerator.DIFFERENT_VALUES,
+
+                table: tableName,
+
+
+                valueInTest: {column: 'value', column2: 'value2'},
+                valueInProd: {column: 'value', column2: 'value4'},
+            };
+
+            chai.expect(comparator.compareTables(tableTestInfo, tableProdInfo, comparatorSettings)).to.eql([expectedDiff]);
+        });
+
+        it('should return diff on different tables values with settings to search by values', function () {
+
+            const tableTestInfo: ITableInfo = {
+
+                tableName: "table",
+                primaryKeys: [],
+                tableData: [
+                    {column2: 'value4', column: 'value3'},
+                    {column: 'value', column2: 'value2'}
+                ]
+            };
+
+            const tableProdInfo: ITableInfo = {
+
+                tableName: "table",
+                primaryKeys: [],
+                tableData: [
+                    {column2: 'value4', column: 'value3'},
+                    {column: 'value2', column2: 'value4'}
+                ]
+            };
+
+            const comparatorSettings: IComparatorSettings = {
+                searchByPrimaries: false,
+                ignorePrimaries: false
+            };
+
+            const expectedDiff: IDifference[] = [{
+                type: DiffGenerator.NO_SUCH_ROW,
+
+                schema: PROD_SCHEMA,
+                table: tableName,
+
+                valueInTest: {column: 'value', column2: 'value2'},
+                valueInProd: null,
+            }, {
+                type: DiffGenerator.NO_SUCH_ROW,
+
+                schema: TEST_SCHEMA,
+                table: tableName,
+
+                valueInTest: null,
+                valueInProd: {column: 'value2', column2: 'value4'},
+            }];
+
+            chai.expect(comparator.compareTables(tableTestInfo, tableProdInfo, comparatorSettings)).to.eql(expectedDiff);
+        });
+
+        it('should return diff on different tables structure (extra columns)', function () {
+
+            const tableTestInfo: ITableInfo = {
+
+                tableName: "table",
+                primaryKeys: ['column'],
+                tableData: [
+                    {column2: 'value4', column: 'value3'},
+                    {column: 'value', column2: 'value2'}
+                ]
+            };
+
+            const tableProdInfo: ITableInfo = {
+
+                tableName: "table",
+                primaryKeys: ['column'],
+                tableData: [
+                    {column2: 'value5', column: 'value3', column3: 'value7'},
+                    {column: 'value', column2: 'value2', column3: 'value4'}
+                ]
+            };
+
+            const comparatorSettings: IComparatorSettings = {
+                searchByPrimaries: true,
+                ignorePrimaries: false
+            };
+
+            const expectedDiff: IDifference[] = [{
+                type: DiffGenerator.NO_SUCH_COLUMN,
+
+                table: tableName,
+
+                columnsInTest: [],
+                columnsInProd: ['column3'],
+            }, {
+                type: DiffGenerator.DIFFERENT_VALUES,
+
+                table: tableName,
+
+                valueInTest: {column2: 'value4', column: 'value3'},
+                valueInProd: {column2: 'value5', column: 'value3', column3: 'value7'},
+            }];
+
+            chai.expect(comparator.compareTables(tableTestInfo, tableProdInfo, comparatorSettings)).to.eql(expectedDiff);
+        });
+
+        it('should return diff on different tables structure and settings to search by values', function () {
+
+            const tableTestInfo: ITableInfo = {
+
+                tableName: "table",
+                primaryKeys: [],
+                tableData: [
+                    {column2: 'value4', column: 'value3'},
+                    {column: 'value', column2: 'value2'}
+                ]
+            };
+
+            const tableProdInfo: ITableInfo = {
+
+                tableName: "table",
+                primaryKeys: [],
+                tableData: [
+                    {column2: 'value5', column: 'value3', column3: 'value7'},
+                    {column: 'value', column2: 'value2', column3: 'value4'}
+                ]
+            };
+
+            const comparatorSettings: IComparatorSettings = {
+                searchByPrimaries: false,
+                ignorePrimaries: false
+            };
+
+            const expectedDiff: IDifference[] = [{
+                type: DiffGenerator.NO_SUCH_COLUMN,
+
+                table: tableName,
+
+                columnsInTest: [],
+                columnsInProd: ['column3'],
+            }, {
+                type: DiffGenerator.NO_SUCH_ROW,
+
+                schema: PROD_SCHEMA,
+                table: tableName,
+
+                valueInTest: {column2: 'value4', column: 'value3'},
+                valueInProd: null,
+            }, {
+                type: DiffGenerator.NO_SUCH_ROW,
+
+                schema: TEST_SCHEMA,
+                table: tableName,
+
+                valueInTest: null,
+                valueInProd: {column2: 'value5', column: 'value3', column3: 'value7'}
+            }];
+
+            chai.expect(comparator.compareTables(tableTestInfo, tableProdInfo, comparatorSettings)).to.eql(expectedDiff);
+        });
+
+    });
+
+    describe('Comparator.findWithSamePrimaries', function () {
+
+        beforeEach(clearComparator);
+
+        it('should return row with same primary from second table', function () {
+            const rowTest: any = {column: 'value', column2: 'value2'};
+
+            comparator.primaryKeys = ['column'];
+
+            comparator.tableProdInfo = {
+
+                tableName: "table",
+                primaryKeys: ['column'],
+                tableData: [
+                    {column: 'value2', column2: 'value'},
+                    {column: 'value', column2: 'value3'}
+                ]
+            };
+
+            chai.expect(comparator.findWithSamePrimaries(rowTest)).to.eql({column: 'value', column2: 'value3'});
+        });
+
+        it('should return row with same primaries from second table', function () {
+            const rowTest: any = {column: 'value', column2: 'value2', column3: 'value7'};
+
+            comparator.primaryKeys = ['column', 'column2'];
+
+            comparator.tableProdInfo = {
+
+                tableName: "table",
+                primaryKeys: ['column', 'column2'],
+                tableData: [
+                    {column: 'value7', column2: 'value', column3: 'value2'},
+                    {column: 'value', column2: 'value2', column3: 'value4'}
+                ]
+            };
+
+            chai.expect(comparator.findWithSamePrimaries(rowTest)).to.eql({column: 'value', column2: 'value2', column3: 'value4'});
+        });
+
+        it('should return null because there is no row with same primary in second table', function () {
+            const rowTest: any = {column: 'value', column2: 'value2'};
+
+            comparator.primaryKeys = ['column'];
+
+            comparator.tableProdInfo = {
+
+                tableName: "table",
+                primaryKeys: ['column'],
+                tableData: [
+                    {column: 'value2', column2: 'value3'},
+                    {column: 'value3', column2: 'value2'}
+                ]
+            };
+
+            chai.expect(comparator.findWithSamePrimaries(rowTest)).to.eql(null);
+        });
+
+        it('should return null because there is no row with same primaries in second table', function () {
+            const rowTest: any = {column: 'value', column2: 'value3', column3: 'value7'};
+
+            comparator.primaryKeys = ['column', 'column2'];
+
+            comparator.tableProdInfo = {
+
+                tableName: "table",
+                primaryKeys: ['column', 'column2'],
+                tableData: [
+                    {column: 'value7', column2: 'value', column3: 'value2'},
+                    {column: 'value', column2: 'value2', column3: 'value4'}
+                ]
+            };
+
+            chai.expect(comparator.findWithSamePrimaries(rowTest)).to.eql(null);
+        });
+    });
+
+    describe('Comparator.findWithSameValues', function () {
+
+        beforeEach(clearComparator);
+
+        it('should return row with same values from second table', function () {
+            const rowTest: any = {column: 'value', column2: 'value2'};
+
+            comparator.tableProdInfo = {
+
+                tableName: "table",
+                primaryKeys: [],
+                tableData: [
+                    {column: 'value2', column2: 'value'},
+                    {column: 'value', column2: 'value2'}
+                ]
+            };
+
+            chai.expect(comparator.findWithSameValues(rowTest)).to.eql({column: 'value', column2: 'value2'});
+        });
+
+        it('should return null because there is no row with same values in second table', function () {
+            const rowTest: any = {column: 'value', column2: 'value2'};
+
+            comparator.tableProdInfo = {
+
+                tableName: "table",
+                primaryKeys: [],
+                tableData: [
+                    {column: 'value2', column2: 'value'},
+                    {column: 'value', column2: 'value3'}
+                ]
+            };
+
+            chai.expect(comparator.findWithSameValues(rowTest)).to.eql(null);
+        });
+    });
+
     describe('Comparator.compareRows', function () {
+
+        beforeEach(clearComparator);
 
         it('should create diff about not found column', function (){
             const rowTest: any = {column: 'value', column2: 'value2'};
             const rowProd: any = {column: 'value'};
 
             let expectedDiff: IDifference = {
-                type: NO_SUCH_COLUMN,
+                type: DiffGenerator.NO_SUCH_COLUMN,
 
                 table: tableName,
 
@@ -35,7 +442,7 @@ describe('Comparator', function () {
                 columnsInProd: []
             };
 
-            comparator.compareRows(rowTest, rowProd);
+            comparator.checkTablesColumns(rowTest, rowProd);
 
             chai.expect(comparator.myDifferences).to.eql([expectedDiff]);
             comparator.myDifferences = [];
@@ -46,7 +453,7 @@ describe('Comparator', function () {
             const rowProd: any = {column: 'value1'};
 
             const expectedDiff: IDifference = {
-                type: DIFFERENT_VALUES,
+                type: DiffGenerator.DIFFERENT_VALUES,
 
                 table: tableName,
 
@@ -65,7 +472,7 @@ describe('Comparator', function () {
             const rowProd: any = {column: 'value', column2: 'value2'};
 
             const expectedDiff: IDifference = {
-                type: DIFFERENT_VALUES,
+                type: DiffGenerator.DIFFERENT_VALUES,
 
                 table: tableName,
 
@@ -84,14 +491,14 @@ describe('Comparator', function () {
             const rowProd: any = {column: 'value3'};
 
             const expectedDiffs: IDifference[] = [{
-                type: NO_SUCH_COLUMN,
+                type: DiffGenerator.NO_SUCH_COLUMN,
 
                 table: tableName,
 
                 columnsInTest: ['column2'],
                 columnsInProd: []
             }, {
-                type: DIFFERENT_VALUES,
+                type: DiffGenerator.DIFFERENT_VALUES,
 
                 table: tableName,
 
@@ -99,6 +506,7 @@ describe('Comparator', function () {
                 valueInProd: rowProd,
             }];
 
+            comparator.checkTablesColumns(rowTest, rowProd);
             comparator.compareRows(rowTest, rowProd);
 
             chai.expect(comparator.myDifferences).to.eql(expectedDiffs);
@@ -110,14 +518,14 @@ describe('Comparator', function () {
             const rowProd: any = {column: 'value3'};
 
             const expectedDiffs: IDifference[] = [{
-                type: NO_SUCH_COLUMN,
+                type: DiffGenerator.NO_SUCH_COLUMN,
 
                 table: tableName,
 
                 columnsInTest: ['column2', 'column3'],
                 columnsInProd: []
             }, {
-                type: DIFFERENT_VALUES,
+                type: DiffGenerator.DIFFERENT_VALUES,
 
                 table: tableName,
 
@@ -125,6 +533,7 @@ describe('Comparator', function () {
                 valueInProd: rowProd,
             }];
 
+            comparator.checkTablesColumns(rowTest, rowProd);
             comparator.compareRows(rowTest, rowProd);
 
             chai.expect(comparator.myDifferences).to.eql(expectedDiffs);
@@ -135,6 +544,8 @@ describe('Comparator', function () {
 
 
     describe('Comparator.samePrimaryKeysValues', function () {
+
+        beforeEach(clearComparator);
 
         it('should return true on equals maps of primary columns', function () {
             const keys1 = new Map();
@@ -233,6 +644,8 @@ describe('Comparator', function () {
 
     describe('Comparator.isPrimaryColumn', function () {
 
+        beforeEach(clearComparator);
+
         it('should return true on string that is in array with length = 1', function (){
             comparator.primaryKeys = ['key1'];
 
@@ -262,6 +675,7 @@ describe('Comparator', function () {
 
     describe('Comparator.compareListOfTablesNamesAndMakeDiffs', function () {
 
+        beforeEach(clearComparator);
 
         it('should return empty diffs array on equal values and order in arrays', function (){
             comparator.primaryKeys = ['key1'];
@@ -296,7 +710,7 @@ describe('Comparator', function () {
             const prodTables = ['table2', 'table1'];
 
             const expectedDiff: IDifference = {
-                type: NO_SUCH_TABLE,
+                type: DiffGenerator.NO_SUCH_TABLE,
 
                 schema: PROD_SCHEMA,
                 table: 'table3'
@@ -317,12 +731,12 @@ describe('Comparator', function () {
             const prodTables = ['table2', 'table1', 'table4'];
 
             const expectedDiff: IDifference[] = [{
-                type: NO_SUCH_TABLE,
+                type: DiffGenerator.NO_SUCH_TABLE,
 
                 schema: PROD_SCHEMA,
                 table: 'table3'
             }, {
-                type: NO_SUCH_TABLE,
+                type: DiffGenerator.NO_SUCH_TABLE,
 
                 schema: TEST_SCHEMA,
                 table: 'table4'

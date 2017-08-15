@@ -1,10 +1,5 @@
 import {TEST_SCHEMA} from "../../globals";
 
-import {NO_SUCH_TABLE} from "../../globals";
-import {NO_SUCH_COLUMN} from "../../globals";
-import {NO_SUCH_ROW} from "../../globals";
-import {DIFFERENT_VALUES} from "../../globals";
-
 export interface IDifference {
     type: string;
 
@@ -21,9 +16,14 @@ export interface IDifference {
 export class DiffGenerator{
     tableName: string;
 
+    public static readonly NO_SUCH_TABLE: string = 'There is no table with given name';
+    public static readonly NO_SUCH_COLUMN: string = 'There is no such column';
+    public static readonly NO_SUCH_ROW: string = 'There is no row with same values';
+    public static readonly DIFFERENT_VALUES: string = 'Values in rows differ';
+
     generateDifferentValuesDiff(rowTest: Array<any>, rowProd: Array<any>): IDifference {
         return {
-            type: DIFFERENT_VALUES,
+            type: DiffGenerator.DIFFERENT_VALUES,
 
             table: this.tableName,
 
@@ -40,7 +40,7 @@ export class DiffGenerator{
         }
 
         return {
-            type: NO_SUCH_ROW,
+            type: DiffGenerator.NO_SUCH_ROW,
 
             schema: schema,
             table: this.tableName,
@@ -52,7 +52,7 @@ export class DiffGenerator{
 
     generateNoSuchColumns(uniqueColumnsTest: Array<string>, uniqueColumnsProd: Array<string>): IDifference {
         return {
-            type: NO_SUCH_COLUMN,
+            type: DiffGenerator.NO_SUCH_COLUMN,
 
             table: this.tableName,
 
@@ -63,7 +63,7 @@ export class DiffGenerator{
 
     generateNoSuchTable(tableName: string, schema: string): IDifference {
         return {
-            type: NO_SUCH_TABLE,
+            type: DiffGenerator.NO_SUCH_TABLE,
 
             schema: schema,
             table: tableName

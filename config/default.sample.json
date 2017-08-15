@@ -28,7 +28,7 @@
             {
                 "table_name": {
                     "searchByPrimaries": false,
-                    "deletePrimaries": false
+                    "ignorePrimaries": false
                 }
             }
         ]
