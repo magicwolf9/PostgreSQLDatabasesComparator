@@ -7,11 +7,13 @@ import {TablePrimariyKeysModel} from "../models/table_keys";
 import {ListTablesNamesModel} from "../models/list_tables";
 import {IDifference} from "../services/diff_generator_service";
 import {TextDiffGenerator} from "../services/text_difference_generator_service";
+import {SQLGenerator} from "../services/sql_generator_service";
 
 
 export class BaseController extends Controller{
 
     comparator = new Comparator();
+    SQLGenerator = new SQLGenerator();
     //textDiffsGenerator = new TextDiffGenerator();
 
     differences = async (ctx: Context, next: () => any): Promise<void> => {
@@ -45,7 +47,7 @@ export class BaseController extends Controller{
         }
 
         //ctx.body = this.textDiffsGenerator.generateTexts(differences);
-        ctx.body = differences;
+        ctx.body =  this.SQLGenerator.generateSQL(differences);
         next();
     };
 
@@ -59,14 +61,14 @@ export class BaseController extends Controller{
 
 
         for(let table of tablesWithOverriddenSettings){
-            if(table.tableName === tableName){
-                console.log("overridden for "+ tableName);
+            if(table.tableName == tableName){
                 return table.settings;
             }
         }
 
         return defaultSettings;
     }
+
     getFullTablesToCompare(listOfTables: Array<string>, listToCompareWithShortcuts: Array<string>): Array<string>{
         let tablesToCompareFull: Array<string> = [];
 

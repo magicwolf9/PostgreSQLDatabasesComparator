@@ -16,13 +16,8 @@ export class TablePrimariyKeysModel {
                 WHERE  i.indrelid = '${defaultSchema}.${tableName}'::regclass
                 AND    i.indisprimary;`, []);
 
-        keys = keys.map(function (k) {
+        return keys.map(function (k) {
             return k.attname;
-        });
-
-
-        return keys.map(key => {
-            return key.replace(/_/g, '');
         });
     }
 }

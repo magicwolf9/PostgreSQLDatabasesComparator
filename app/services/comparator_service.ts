@@ -48,7 +48,7 @@ export class Comparator{
             const rowProd = findRow(rowTest, tableProdInfo);
 
             if(!rowProd){
-                this.myDifferences = this.myDifferences.concat(this.diffGenerator.generateNoSuchRowDiff(rowTest, PROD_SCHEMA));
+                this.myDifferences = this.myDifferences.concat(this.diffGenerator.generateNoSuchRowDiff(rowTest, PROD_SCHEMA, this.primaryKeys));
             } else {
                 tableProdInfo.tableData.splice(tableProdInfo.tableData.indexOf(rowProd), 1);
                 compareRows(rowTest, rowProd);
@@ -57,7 +57,7 @@ export class Comparator{
 
         //make differences from rest of lines in table2
         for (let row of tableProdInfo.tableData) {
-            this.myDifferences = this.myDifferences.concat(this.diffGenerator.generateNoSuchRowDiff(row, TEST_SCHEMA));
+            this.myDifferences = this.myDifferences.concat(this.diffGenerator.generateNoSuchRowDiff(row, TEST_SCHEMA, this.primaryKeys));
         }
 
         return this.myDifferences;
@@ -128,7 +128,7 @@ export class Comparator{
             const value = rowTest[key];
 
             if(this.uniqueColumnsInTest.indexOf(key) == -1 && rowProd[key] != value){
-                this.myDifferences = this.myDifferences.concat(this.diffGenerator.generateDifferentValuesDiff(rowTest, rowProd));
+                this.myDifferences = this.myDifferences.concat(this.diffGenerator.generateDifferentValuesDiff(rowTest, rowProd, this.primaryKeys));
                 break;
             }
         }
@@ -166,7 +166,7 @@ export class Comparator{
     }
 
     isPrimaryColumn(key: string): boolean {
-        return this.primaryKeys.indexOf(key.toLowerCase()) != -1;
+        return this.primaryKeys.indexOf(_.snakeCase(key)) != -1;
     }
 
     compareListOfTablesNamesAndMakeDiffs(testTables: Array<string>, prodTables: Array<string>): [Array<string>, Array<IDifference>]{
