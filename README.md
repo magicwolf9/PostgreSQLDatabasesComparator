@@ -1,14 +1,17 @@
 # PostgreSQLDatabasesComparator
-Fill config before use
-
 That service can connect to 2 PostgreSQL databases and check values of certain tables.
 As a result differences in values are shown to the user and  are generated SQL commands to fix the differences. 
 It is used to compare test and production databases of a product.
 
+How to use: 
+
+Fill config before use
+
 To get differences: localhost:8089/comparator/differences
 To change schema to compare: localhost:8089/comparator/changeSchame?schema=*schemaName* //*schemaName* must be in config
 
-Config sample:
+Config sample
+
 {
     "schema": "defSchema", //default schema
     "port": 8089,
