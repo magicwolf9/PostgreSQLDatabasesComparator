@@ -1,4 +1,5 @@
 import * as config from "config";
+import * as _ from 'lodash';
 import {Controller} from "innots";
 import {Context} from 'koa';
 import {TableDataModel} from "../models/table_data";
@@ -10,7 +11,7 @@ import {TextDiffGenerator} from "../services/text_difference_generator_service";
 import {SQLGenerator} from "../services/sql_generator_service";
 
 
-export class BaseController extends Controller{
+export class BaseController extends Controller {
 
     comparator = new Comparator();
     SQLGenerator = new SQLGenerator();
@@ -19,7 +20,7 @@ export class BaseController extends Controller{
     differences = async (ctx: Context, next: () => any): Promise<void> => {
 
         let tablesToCompare: Array<string> = config.get('comparator_settings.tablesToCompare');
-        let differences: Array<IDifference> = [];
+        let differences = {};
 
         const allTablesTest: Array<string> = await ListTablesNamesModel.getTables(true);
         const allTablesProd: Array<string> = await ListTablesNamesModel.getTables(false);
@@ -31,10 +32,13 @@ export class BaseController extends Controller{
         const tablesToCompareProd: Array<string> = this.getFullTablesToCompare(allTablesProd, tablesToCompare);
 
         //check if tablesToCompare for test and prod have same tables, if no --> make differences for tables
-        let newTablesToCompare: Array<string>;
-        [newTablesToCompare, differences] = this.comparator.compareListOfTablesNamesAndMakeDiffs(tablesToCompareTest, tablesToCompareProd);
 
-        for(let tableName of newTablesToCompare) {
+        let {tablesToCompare: newTablesToCompare, tableDifferences: tablesDiffs} = this.comparator.compareListOfTablesNamesAndMakeDiffs(tablesToCompareTest, tablesToCompareProd);
+
+        differences["Differences in tables"] = tablesDiffs;
+        differences["tables"] = {};
+
+        for (let tableName of newTablesToCompare) {
 
             const testTable: ITableInfo = await TableDataModel.getData(tableName, true);
             const prodTable: ITableInfo = await TableDataModel.getData(tableName, false);
@@ -42,16 +46,23 @@ export class BaseController extends Controller{
             testTable.primaryKeys = await TablePrimariyKeysModel.getPrimaries(tableName, true);
             prodTable.primaryKeys = await TablePrimariyKeysModel.getPrimaries(tableName, false);
 
-
-            differences = this.comparator.compareTables(testTable, prodTable, this.getComparatorSettingsForTable(tableName));
+            const tableDifferences = _.cloneDeep(
+                this.comparator.compareTables(testTable, prodTable, this.getComparatorSettingsForTable(tableName))
+            );
+            differences["tables"][tableName] = tableDifferences;
         }
 
+        let {SQLCommandsTestToProd: testToProd, SQLCommandsProdToTest: prodToTest}= this.SQLGenerator.generateSQLAndFillDiffs(differences["tables"]);
+
+        differences["SQLTestToProd"] = testToProd;
+        differences["SQLProdToTest"] = prodToTest;
+
         //ctx.body = this.textDiffsGenerator.generateTexts(differences);
-        ctx.body =  this.SQLGenerator.generateSQL(differences);
+        ctx.body = differences;
         next();
     };
 
-    getComparatorSettingsForTable(tableName: string): IComparatorSettings{
+    getComparatorSettingsForTable(tableName: string): IComparatorSettings {
         const defaultSettings: IComparatorSettings = {
             searchByPrimaries: true,
             ignorePrimaries: false
@@ -60,8 +71,8 @@ export class BaseController extends Controller{
         const tablesWithOverriddenSettings: Array<any> = config.get('comparator_settings.overrideDefaultSettings');
 
 
-        for(let table of tablesWithOverriddenSettings){
-            if(table.tableName == tableName){
+        for (let table of tablesWithOverriddenSettings) {
+            if (table.tableName == tableName) {
                 return table.settings;
             }
         }
@@ -69,7 +80,7 @@ export class BaseController extends Controller{
         return defaultSettings;
     }
 
-    getFullTablesToCompare(listOfTables: Array<string>, listToCompareWithShortcuts: Array<string>): Array<string>{
+    getFullTablesToCompare(listOfTables: Array<string>, listToCompareWithShortcuts: Array<string>): Array<string> {
         let tablesToCompareFull: Array<string> = [];
 
         listToCompareWithShortcuts.forEach(tableName => {
@@ -84,7 +95,7 @@ export class BaseController extends Controller{
         return tablesToCompareFull;
     }
 
-    getTablesNamesFromShortcut(shortcut: string, listOfTables: Array<string>): Array<string>{
+    getTablesNamesFromShortcut(shortcut: string, listOfTables: Array<string>): Array<string> {
         let editedShortcut: string = shortcut.substr(0, shortcut.indexOf('*'));
 
         return listOfTables.filter(tableName => {

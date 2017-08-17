@@ -1,108 +1,120 @@
 import * as _ from 'lodash';
+import * as config from "config";
 import {DiffGenerator, IDifference} from "./diff_generator_service";
+
 const fs = require('fs');
 
-import {logger, PROD_SCHEMA} from "../../globals";
+import {logger, PROD_SCHEMA, TEST_SCHEMA} from "../../globals";
 import {isNull, isUndefined} from "util";
 
-export class SQLGenerator{
+export class SQLGenerator {
 
-    generateSQL(differences: Array<IDifference>): [Array<IDifference>, Array<string>]{
+    generateSQLAndFillDiffs(differences: Array<any>): { SQLCommandsTestToProd: Array<string>, SQLCommandsProdToTest: Array<string> } {
 
+        console.log(differences);
         let SQLCommandsTestToProd: Array<string> = [];
         let SQLCommandsProdToTest: Array<string> = [];
 
-        differences.forEach(difference => {
 
-            switch(difference.type) {
+        Object.keys(differences).forEach(tableName => {
 
-                case DiffGenerator.NO_SUCH_ROW:{
+            differences[tableName].forEach(diffForTable => {
 
-                    let commandTestToProd: string;
-                    let commandProdToTest: string;
 
-                    [commandTestToProd, commandProdToTest] = this.generateForNoSuchRow(difference);
+                console.log(diffForTable);
+                switch (diffForTable.type) {
 
-                    SQLCommandsTestToProd = SQLCommandsTestToProd.concat(commandTestToProd);
-                    SQLCommandsProdToTest = SQLCommandsProdToTest.concat(commandProdToTest);
+                    case DiffGenerator.NO_SUCH_ROW: {
 
-                    difference.SQLtoFixIt = commandTestToProd + commandProdToTest;
-                    break;
+                        let commandTestToProd: string;
+                        let commandProdToTest: string;
+
+                        [commandTestToProd, commandProdToTest] = this.generateForNoSuchRow(diffForTable);
+
+                        if (!isNull(commandTestToProd)) {
+                            SQLCommandsTestToProd.push(commandTestToProd);
+                            diffForTable.SQLtoFixIt = commandTestToProd;
+                        } else {
+                            SQLCommandsProdToTest.push(commandProdToTest);
+                            diffForTable.SQLtoFixIt = commandProdToTest;
+                        }
+
+                        break;
+                    }
+
+                    case DiffGenerator.DIFFERENT_VALUES: {
+
+                        let commandTestToProd: string;
+                        let commandProdToTest: string;
+
+                        [commandTestToProd, commandProdToTest] = this.generateForDifferentValues(diffForTable);
+
+                        SQLCommandsTestToProd.push(commandTestToProd);
+                        SQLCommandsProdToTest.push(commandProdToTest);
+
+                        diffForTable.SQLtoFixIt = `Fix by transfer test data to prod: ` + commandTestToProd + `\n 
+                                Fix by transfer prod data to test: ` + commandProdToTest;
+                        break;
+                    }
+                    default:
+                        break;
                 }
-
-                case DiffGenerator.DIFFERENT_VALUES: {
-
-                    let commandTestToProd: string;
-                    let commandProdToTest: string;
-
-                    [commandTestToProd, commandProdToTest] = this.generateForDifferentValues(difference);
-
-                    SQLCommandsTestToProd = SQLCommandsTestToProd.concat(commandTestToProd);
-                    SQLCommandsProdToTest = SQLCommandsProdToTest.concat(commandProdToTest);
-
-                    difference.SQLtoFixIt = commandTestToProd + commandProdToTest;
-                    break;
-                }
-                default:
-                    break;
-            }
+            });
 
         });
 
         //TODO разнести в разные файлы
 
-        fs.writeFile('/SQLCommandsTestDataToProd', SQLCommandsTestToProd, function (err) {
-           if(err){
-               logger.error(err);
-           }
+        fs.writeFile(config.get('pathForSQLFiles') + '/SQLCommandsTestDataToProd', SQLCommandsTestToProd, function (err) {
+            if (err) {
+                logger.error(err);
+            }
         });
 
-        fs.writeFile('/SQLCommandsProdDataToTest', SQLCommandsProdToTest, function (err) {
-            if(err){
+        fs.writeFile(config.get('pathForSQLFiles') + '/SQLCommandsProdDataToTest', SQLCommandsProdToTest, function (err) {
+            if (err) {
                 logger.error(err);
             }
         });
 
 
-        return [differences, SQLCommandsTestToProd];
+        return {SQLCommandsTestToProd: SQLCommandsTestToProd, SQLCommandsProdToTest: SQLCommandsProdToTest};
     }
 
-    generateForNoSuchRow(difference: IDifference): [string, string]{
+    generateForNoSuchRow(difference: IDifference): [string, string] {
         let SQLcommand: string = `INSERT INTO ` + difference.table + ` (`;
 
-        const row = difference.valueInTest? difference.valueInTest: difference.valueInProd;
+        const row = difference.valueInTest ? difference.valueInTest : difference.valueInProd;
 
         Object.keys(row).forEach(key => {
-            if(!(difference.primaryKeys.indexOf(_.snakeCase(key)) != -1 && (typeof row[key] == 'number'))) {
+            if (!(difference.primaryKeys.indexOf(_.snakeCase(key)) != -1 && (typeof row[key] == 'number'))) {
                 SQLcommand += _.snakeCase(key) + `, `;
             }
         });
 
         //delete last `, `
-        SQLcommand = SQLcommand.substr(0 , SQLcommand.length - 2);
+        SQLcommand = SQLcommand.substr(0, SQLcommand.length - 2);
 
-        SQLcommand += `) 
-        VALUES (`;
+        SQLcommand += `)\n VALUES (`;
 
         Object.keys(row).forEach(key => {
-            //if row[key] is not an autoincrement primary key
-            if(!(difference.primaryKeys.indexOf(_.snakeCase(key)) != -1 && (typeof row[key] == 'number'))){
 
-                if(isNull(row[key]) || isUndefined(row[key])) {
-                    SQLcommand += `default, `;
-                } else if (typeof row[key] != 'number'){
-                    SQLcommand += `'`+ row[key] + `', `;
-                } else {
-                    SQLcommand += row[key] + `, `;
-                }
+            //if row[key] is not an autoincrement primary key
+            if (!(difference.primaryKeys.indexOf(_.snakeCase(key)) != -1 && (typeof row[key] == 'number'))) {
+
+                SQLcommand += this.addValueToSQLString(row[key]);
             }
         });
 
         //delete last `, `
-        SQLcommand = SQLcommand.substr(0 , SQLcommand.length - 2);
+        SQLcommand = SQLcommand.substr(0, SQLcommand.length - 2);
 
-        SQLcommand += `);`;
-        return [SQLcommand, SQLcommand];
+        SQLcommand += `);\n`;
+
+        if (difference.schema == TEST_SCHEMA)
+            return [null, SQLcommand];
+
+        return [SQLcommand, null];
     }
 
     generateForDifferentValues(difference: IDifference): [string, string] {
@@ -117,38 +129,28 @@ export class SQLGenerator{
         [rowTest, rowProd] = this.deleteEqualsValuesFromRows(rowTest, rowProd);
 
         //generate sql to transfer test data to prod
-        Object.keys(rowTest).forEach(key =>{
+        Object.keys(rowTest).forEach(key => {
 
             //if row[key] is not an autoincrement primary key
-            if(!(difference.primaryKeys.indexOf(_.snakeCase(key)) != -1 && (typeof rowTest[key] == 'number'))){
-
-                if(typeof rowTest[key] != 'number') {
-                    commandForTestToProd += _.snakeCase(key) + ` = '` + rowTest[key] + `', `;
-                } else {
-                    commandForTestToProd += _.snakeCase(key) + ` = ` + rowTest[key] + `, `;
-                }
+            if (!this.columnIsAnAutoincrementPrimaryKey(difference.primaryKeys, key, rowTest[key])) {
+                commandForTestToProd += this.addValueAssigntmentToSQLString(key, rowTest[key]);
             }
         });
 
         //generate sql to transfer prod data to test
-        Object.keys(rowProd).forEach(key =>{
+        Object.keys(rowProd).forEach(key => {
 
             //if row[key] is not an autoincrement primary key
-            if(!(difference.primaryKeys.indexOf(_.snakeCase(key)) != -1 && (typeof rowTest[key] == 'number'))) {
-
-                if (typeof rowProd[key] != 'number') {
-                    commandForProdToTest += _.snakeCase(key) + ` = '` + rowProd[key] + `', `;
-                } else {
-                    commandForProdToTest += _.snakeCase(key) + ` = ` + rowProd[key] + `, `;
-                }
+            if (!this.columnIsAnAutoincrementPrimaryKey(difference.primaryKeys, key, rowProd[key])) {
+                commandForProdToTest += this.addValueAssigntmentToSQLString(key, rowProd[key]);
             }
         });
 
         //delete last `, `
-        commandForTestToProd = commandForTestToProd.substr(0 , commandForTestToProd.length - 2);
-        commandForProdToTest = commandForProdToTest.substr(0 , commandForProdToTest.length - 2);
+        commandForTestToProd = commandForTestToProd.substr(0, commandForTestToProd.length - 2);
+        commandForProdToTest = commandForProdToTest.substr(0, commandForProdToTest.length - 2);
 
-        //TODO add 'where'
+        //add 'where'
         commandForTestToProd += ` WHERE `;
         commandForProdToTest += ` WHERE `;
 
@@ -158,7 +160,7 @@ export class SQLGenerator{
         difference.primaryKeys.forEach(key => {
             key = _.camelCase(key);
 
-            if(typeof rowTest[key] != 'number') {
+            if (typeof rowTest[key] != 'number') {
 
                 commandForTestToProd += key + ` = '` + rowTest[key.toString()] + `' AND `;
                 commandForProdToTest += key + ` = '` + rowProd[key.toString()] + `' AND `;
@@ -170,20 +172,20 @@ export class SQLGenerator{
         });
 
         //delete last ` AND `
-        commandForTestToProd = commandForTestToProd.substr(0 , commandForTestToProd.length - 4);
-        commandForProdToTest = commandForProdToTest.substr(0 , commandForProdToTest.length - 4);
+        commandForTestToProd = commandForTestToProd.substr(0, commandForTestToProd.length - 4);
+        commandForProdToTest = commandForProdToTest.substr(0, commandForProdToTest.length - 4);
 
-        return [commandForTestToProd, commandForProdToTest]
+        return [commandForTestToProd + `\n`, commandForProdToTest + `\n`]
     }
 
-    deleteEqualsValuesFromRows(rowTest: any, rowProd: any): [any, any]{
+    deleteEqualsValuesFromRows(rowTest: any, rowProd: any): [any, any] {
         Object.keys(rowTest).forEach(key => {
 
-            if(Object.keys(rowProd).indexOf(key) == -1){
+            if (Object.keys(rowProd).indexOf(key) == -1) {
 
                 delete rowTest[key];
 
-            } else if(rowTest[key] == rowProd[key]){
+            } else if (rowTest[key] == rowProd[key]) {
 
                 delete rowTest[key];
                 delete rowProd[key];
@@ -191,10 +193,33 @@ export class SQLGenerator{
         });
 
         Object.keys(rowProd).forEach(key => {
-            if(Object.keys(rowTest).indexOf(key) == -1){
+            if (Object.keys(rowTest).indexOf(key) == -1) {
                 delete rowProd[key];
             }
         });
         return [_.pickBy(rowTest, v => v !== undefined), _.pickBy(rowProd, v => v !== undefined)];
     }
+
+    addValueToSQLString(value): string {
+        if (isNull(value) || isUndefined(value)) {
+            return `default, `;
+        } else if (typeof value != 'number') {
+            return `'` + value + `', `;
+        } else {
+            return value + `, `;
+        }
+    }
+
+    addValueAssigntmentToSQLString(name: string, value): string {
+        if (typeof value != 'number') {
+            return _.snakeCase(name) + ` = '` + value + `', `;
+        } else {
+            return _.snakeCase(name) + ` = ` + value + `, `;
+        }
+    }
+
+    columnIsAnAutoincrementPrimaryKey(primaryKeys: Array<string>, columnName: string, value): boolean {
+        return primaryKeys.indexOf(_.snakeCase(columnName)) != -1 && (typeof value == 'number');
+    }
+
 }

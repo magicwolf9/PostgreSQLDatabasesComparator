@@ -150,8 +150,8 @@ describe('Comparator', function () {
             const expectedDiff: IDifference = {
                 type: DiffGenerator.DIFFERENT_VALUES,
 
+                primaryKeys: ['column'],
                 table: tableName,
-
 
                 valueInTest: {column: 'value', column2: 'value2'},
                 valueInProd: {column: 'value', column2: 'value4'},
@@ -191,6 +191,7 @@ describe('Comparator', function () {
                 type: DiffGenerator.NO_SUCH_ROW,
 
                 schema: PROD_SCHEMA,
+                primaryKeys: [],
                 table: tableName,
 
                 valueInTest: {column: 'value', column2: 'value2'},
@@ -199,6 +200,7 @@ describe('Comparator', function () {
                 type: DiffGenerator.NO_SUCH_ROW,
 
                 schema: TEST_SCHEMA,
+                primaryKeys: [],
                 table: tableName,
 
                 valueInTest: null,
@@ -245,6 +247,7 @@ describe('Comparator', function () {
             }, {
                 type: DiffGenerator.DIFFERENT_VALUES,
 
+                primaryKeys: ['column'],
                 table: tableName,
 
                 valueInTest: {column2: 'value4', column: 'value3'},
@@ -292,6 +295,7 @@ describe('Comparator', function () {
                 type: DiffGenerator.NO_SUCH_ROW,
 
                 schema: PROD_SCHEMA,
+                primaryKeys: [],
                 table: tableName,
 
                 valueInTest: {column2: 'value4', column: 'value3'},
@@ -300,6 +304,7 @@ describe('Comparator', function () {
                 type: DiffGenerator.NO_SUCH_ROW,
 
                 schema: TEST_SCHEMA,
+                primaryKeys: [],
                 table: tableName,
 
                 valueInTest: null,
@@ -336,12 +341,12 @@ describe('Comparator', function () {
         it('should return row with same primaries from second table', function () {
             const rowTest: any = {column: 'value', column2: 'value2', column3: 'value7'};
 
-            comparator.primaryKeys = ['column', 'column2'];
+            comparator.primaryKeys = ['column', 'column_2'];
 
             comparator.tableProdInfo = {
 
                 tableName: "table",
-                primaryKeys: ['column', 'column2'],
+                primaryKeys: ['column', 'column_2'],
                 tableData: [
                     {column: 'value7', column2: 'value', column3: 'value2'},
                     {column: 'value', column2: 'value2', column3: 'value4'}
@@ -372,7 +377,7 @@ describe('Comparator', function () {
         it('should return null because there is no row with same primaries in second table', function () {
             const rowTest: any = {column: 'value', column2: 'value3', column3: 'value7'};
 
-            comparator.primaryKeys = ['column', 'column2'];
+            comparator.primaryKeys = ['column', 'column_2'];
 
             comparator.tableProdInfo = {
 
@@ -455,6 +460,7 @@ describe('Comparator', function () {
             const expectedDiff: IDifference = {
                 type: DiffGenerator.DIFFERENT_VALUES,
 
+                primaryKeys: undefined,
                 table: tableName,
 
                 valueInTest: rowTest,
@@ -474,6 +480,7 @@ describe('Comparator', function () {
             const expectedDiff: IDifference = {
                 type: DiffGenerator.DIFFERENT_VALUES,
 
+                primaryKeys: undefined,
                 table: tableName,
 
                 valueInTest: rowTest,
@@ -500,6 +507,7 @@ describe('Comparator', function () {
             }, {
                 type: DiffGenerator.DIFFERENT_VALUES,
 
+                primaryKeys: undefined,
                 table: tableName,
 
                 valueInTest: rowTest,
@@ -527,6 +535,7 @@ describe('Comparator', function () {
             }, {
                 type: DiffGenerator.DIFFERENT_VALUES,
 
+                primaryKeys: undefined,
                 table: tableName,
 
                 valueInTest: rowTest,
@@ -647,14 +656,14 @@ describe('Comparator', function () {
         beforeEach(clearComparator);
 
         it('should return true on string that is in array with length = 1', function (){
-            comparator.primaryKeys = ['key1'];
+            comparator.primaryKeys = ['key_1'];
 
             assert.isTrue(comparator.isPrimaryColumn('key1'));
         });
 
 
         it('should return true on one string that is in array with length > 1', function (){
-            comparator.primaryKeys = ['key2', 'key1'];
+            comparator.primaryKeys = ['key_2', 'key_1'];
 
             assert.isTrue(comparator.isPrimaryColumn('key1'));
         });
@@ -683,9 +692,7 @@ describe('Comparator', function () {
             const testTables = ['table1', 'table2', 'table3'];
             const prodTables = ['table1', 'table2', 'table3'];
 
-            let finalListOfTables: Array<string>;
-            let differences: IDifference[];
-            [finalListOfTables, differences] = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
+            let {tablesToCompare: finalListOfTables, tableDifferences: differences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
 
             chai.expect([finalListOfTables, differences]).to.eql([testTables,[]]);
         });
@@ -696,9 +703,7 @@ describe('Comparator', function () {
             const testTables = ['table1', 'table3', 'table2'];
             const prodTables = ['table2', 'table1', 'table3'];
 
-            let finalListOfTables: Array<string>;
-            let differences: IDifference[];
-            [finalListOfTables, differences] = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
+            let {tablesToCompare: finalListOfTables, tableDifferences: differences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
 
             chai.expect([finalListOfTables, differences]).to.eql([testTables,[]]);
         });
@@ -717,9 +722,7 @@ describe('Comparator', function () {
             };
             const expectedTables = ['table1', 'table2'];
 
-            let finalListOfTables: Array<string>;
-            let differences: IDifference[];
-            [finalListOfTables, differences] = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
+            let {tablesToCompare: finalListOfTables, tableDifferences: differences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
 
             chai.expect([finalListOfTables, differences]).to.eql([expectedTables,[expectedDiff]]);
         });
@@ -743,9 +746,7 @@ describe('Comparator', function () {
             }];
             const expectedTables = ['table1', 'table2'];
 
-            let finalListOfTables: Array<string>;
-            let differences: IDifference[];
-            [finalListOfTables, differences] = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
+            let {tablesToCompare: finalListOfTables, tableDifferences: differences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
 
             chai.expect([finalListOfTables, differences]).to.eql([expectedTables, expectedDiff]);
         });

@@ -20,6 +20,8 @@
         "user": "*",
         "password": "*"
     },
+
+    "pathForSQLFiles": "*",
     "comparator_settings": {
         "tablesToCompare": [
             "***", "***"
