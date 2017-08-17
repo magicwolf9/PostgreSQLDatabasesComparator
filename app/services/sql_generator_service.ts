@@ -9,19 +9,15 @@ import {isNull, isUndefined} from "util";
 
 export class SQLGenerator {
 
-    generateSQLAndFillDiffs(differences: Array<any>): { SQLCommandsTestToProd: Array<string>, SQLCommandsProdToTest: Array<string> } {
+    generateSQLAndFillDiffs(differences: Array<any>): { SQLCommandsTestToProd: string, SQLCommandsProdToTest: string } {
 
-        console.log(differences);
-        let SQLCommandsTestToProd: Array<string> = [];
-        let SQLCommandsProdToTest: Array<string> = [];
-
+        let SQLCommandsTestToProd: string = '';
+        let SQLCommandsProdToTest: string = '';
 
         Object.keys(differences).forEach(tableName => {
 
             differences[tableName].forEach(diffForTable => {
 
-
-                console.log(diffForTable);
                 switch (diffForTable.type) {
 
                     case DiffGenerator.NO_SUCH_ROW: {
@@ -32,10 +28,10 @@ export class SQLGenerator {
                         [commandTestToProd, commandProdToTest] = this.generateForNoSuchRow(diffForTable);
 
                         if (!isNull(commandTestToProd)) {
-                            SQLCommandsTestToProd.push(commandTestToProd);
+                            SQLCommandsTestToProd += commandTestToProd;
                             diffForTable.SQLtoFixIt = commandTestToProd;
                         } else {
-                            SQLCommandsProdToTest.push(commandProdToTest);
+                            SQLCommandsProdToTest += commandProdToTest;
                             diffForTable.SQLtoFixIt = commandProdToTest;
                         }
 
@@ -49,8 +45,8 @@ export class SQLGenerator {
 
                         [commandTestToProd, commandProdToTest] = this.generateForDifferentValues(diffForTable);
 
-                        SQLCommandsTestToProd.push(commandTestToProd);
-                        SQLCommandsProdToTest.push(commandProdToTest);
+                        SQLCommandsTestToProd += commandTestToProd;
+                        SQLCommandsProdToTest += commandProdToTest;
 
                         diffForTable.SQLtoFixIt = `Fix by transfer test data to prod: ` + commandTestToProd + `\n 
                                 Fix by transfer prod data to test: ` + commandProdToTest;
@@ -65,13 +61,13 @@ export class SQLGenerator {
 
         //TODO разнести в разные файлы
 
-        fs.writeFile(config.get('pathForSQLFiles') + '/SQLCommandsTestDataToProd', SQLCommandsTestToProd, function (err) {
+        fs.writeFile(config.get(config.get('schema') + '.pathForSQLFiles') + '/SQLCommandsTestDataToProd', SQLCommandsTestToProd, function (err) {
             if (err) {
                 logger.error(err);
             }
         });
 
-        fs.writeFile(config.get('pathForSQLFiles') + '/SQLCommandsProdDataToTest', SQLCommandsProdToTest, function (err) {
+        fs.writeFile(config.get(config.get('schema') + '.pathForSQLFiles') + '/SQLCommandsProdDataToTest', SQLCommandsProdToTest, function (err) {
             if (err) {
                 logger.error(err);
             }
@@ -95,7 +91,7 @@ export class SQLGenerator {
         //delete last `, `
         SQLcommand = SQLcommand.substr(0, SQLcommand.length - 2);
 
-        SQLcommand += `)\n VALUES (`;
+        SQLcommand += `)\n\t VALUES (`;
 
         Object.keys(row).forEach(key => {
 
@@ -131,7 +127,6 @@ export class SQLGenerator {
         //generate sql to transfer test data to prod
         Object.keys(rowTest).forEach(key => {
 
-            //if row[key] is not an autoincrement primary key
             if (!this.columnIsAnAutoincrementPrimaryKey(difference.primaryKeys, key, rowTest[key])) {
                 commandForTestToProd += this.addValueAssigntmentToSQLString(key, rowTest[key]);
             }
@@ -151,8 +146,8 @@ export class SQLGenerator {
         commandForProdToTest = commandForProdToTest.substr(0, commandForProdToTest.length - 2);
 
         //add 'where'
-        commandForTestToProd += ` WHERE `;
-        commandForProdToTest += ` WHERE `;
+        commandForTestToProd += `\n\t WHERE `;
+        commandForProdToTest += `\n\t WHERE `;
 
         rowTest = difference.valueInTest;
         rowProd = difference.valueInProd;
@@ -175,7 +170,10 @@ export class SQLGenerator {
         commandForTestToProd = commandForTestToProd.substr(0, commandForTestToProd.length - 4);
         commandForProdToTest = commandForProdToTest.substr(0, commandForProdToTest.length - 4);
 
-        return [commandForTestToProd + `\n`, commandForProdToTest + `\n`]
+        commandForTestToProd += `);\n`;
+        commandForProdToTest += `);\n`;
+
+        return [commandForTestToProd, commandForProdToTest]
     }
 
     deleteEqualsValuesFromRows(rowTest: any, rowProd: any): [any, any] {

@@ -2,7 +2,7 @@ import * as config from 'config';
 import {testPgService} from "../../globals";
 import {prodPgService} from "../../globals";
 
-const defaultSchema = config.get('defaultSchema');
+const schema = config.get('schema');
 
 export class TablePrimariyKeysModel {
     static async getPrimaries(tableName: string, isTestDB: boolean): Promise<Array<string>> {
@@ -13,7 +13,7 @@ export class TablePrimariyKeysModel {
                 FROM   pg_index i
                 JOIN   pg_attribute a ON a.attrelid = i.indrelid
                                      AND a.attnum = ANY(i.indkey)
-                WHERE  i.indrelid = '${defaultSchema}.${tableName}'::regclass
+                WHERE  i.indrelid = '${schema}.${tableName}'::regclass
                 AND    i.indisprimary;`, []);
 
         return keys.map(function (k) {

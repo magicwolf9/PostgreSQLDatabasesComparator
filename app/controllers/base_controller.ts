@@ -19,7 +19,7 @@ export class BaseController extends Controller {
 
     differences = async (ctx: Context, next: () => any): Promise<void> => {
 
-        let tablesToCompare: Array<string> = config.get('comparator_settings.tablesToCompare');
+        let tablesToCompare: Array<string> = config.get(config.get('schema') + '.comparator_settings.tablesToCompare');
         let differences = {};
 
         const allTablesTest: Array<string> = await ListTablesNamesModel.getTables(true);
@@ -35,8 +35,8 @@ export class BaseController extends Controller {
 
         let {tablesToCompare: newTablesToCompare, tableDifferences: tablesDiffs} = this.comparator.compareListOfTablesNamesAndMakeDiffs(tablesToCompareTest, tablesToCompareProd);
 
-        differences["Differences in tables"] = tablesDiffs;
-        differences["tables"] = {};
+        differences["DDLDifferences"] = tablesDiffs;
+        differences["ContentDifferences"] = {};
 
         for (let tableName of newTablesToCompare) {
 
@@ -49,10 +49,11 @@ export class BaseController extends Controller {
             const tableDifferences = _.cloneDeep(
                 this.comparator.compareTables(testTable, prodTable, this.getComparatorSettingsForTable(tableName))
             );
-            differences["tables"][tableName] = tableDifferences;
+            if(tableDifferences.length > 0)
+                differences["ContentDifferences"][tableName] = tableDifferences;
         }
 
-        let {SQLCommandsTestToProd: testToProd, SQLCommandsProdToTest: prodToTest}= this.SQLGenerator.generateSQLAndFillDiffs(differences["tables"]);
+        let {SQLCommandsTestToProd: testToProd, SQLCommandsProdToTest: prodToTest}= this.SQLGenerator.generateSQLAndFillDiffs(differences["ContentDifferences"]);
 
         differences["SQLTestToProd"] = testToProd;
         differences["SQLProdToTest"] = prodToTest;
@@ -68,7 +69,7 @@ export class BaseController extends Controller {
             ignorePrimaries: false
         };
 
-        const tablesWithOverriddenSettings: Array<any> = config.get('comparator_settings.overrideDefaultSettings');
+        const tablesWithOverriddenSettings: Array<any> = config.get(config.get('schema') + '.comparator_settings.overrideDefaultSettings');
 
 
         for (let table of tablesWithOverriddenSettings) {
@@ -102,4 +103,13 @@ export class BaseController extends Controller {
             return tableName.startsWith(editedShortcut);
         });
     }
+
+    changeSchema = async (ctx: Context, next: () => any): Promise<void> => {
+
+        //config.set('schema', ctx.schema);
+        ctx.body = '';
+        next();
+    }
+
+
 }

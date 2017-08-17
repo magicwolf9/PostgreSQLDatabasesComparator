@@ -1,40 +1,68 @@
 {
-    "defaultSchema": "kassa",
-    "defaultLocale": "RU",
+    "schema": "defSchema",
     "port": 8089,
     "url": "/comparator/",
     "logLevel": "DEBUG",
-    "generalAppCode": "ALL",
-    "generalAppDefaultErrorCode": "ALL",
-    "test_db": {
-        "host": "*",
-        "port": 5432,
-        "database": "*",
-        "user": "*",
-        "password": "*"
-    },
-    "prod_db": {
-        "host": "*",
-        "port": 5432,
-        "database": "*",
-        "user": "*",
-        "password": "*"
-    },
+    "defSchema": {
+        "test_db": {
+            "host": "*",
+            "port": 5432,
+            "database": "*",
+            "user": "*",
+            "password": "*"
+        },
+        "prod_db": {
+            "host": "*",
+            "port": 5432,
+            "database": "*",
+            "user": "*",
+            "password": "*"
+        },
 
-    "pathForSQLFiles": "*",
-    "comparator_settings": {
-        "tablesToCompare": [
-            "***", "***"
-        ],
-        "overrideDefaultSettings": [
-            {
-                "table_name": {
-                    "searchByPrimaries": false,
-                    "ignorePrimaries": false
+        "pathForSQLFiles": "*",
+        "comparator_settings": {
+            "tablesToCompare": [
+                "***", "***"
+            ],
+            "overrideDefaultSettings": [
+                {
+                    "table_name": {
+                        "searchByPrimaries": false,
+                        "ignorePrimaries": false
+                    }
                 }
-            }
-        ]
+            ]
+        }
     },
-    "allowedApplicationCodes": ["KASSA", "CHECKOUT"],
-    "codeValidationRegexp": "^[a-zA-Z0-9_]*$"
+    "schema2": {
+        "test_db": {
+            "host": "*",
+            "port": 5432,
+            "database": "*",
+            "user": "*",
+            "password": "*"
+        },
+        "prod_db": {
+            "host": "*",
+            "port": 5432,
+            "database": "*",
+            "user": "*",
+            "password": "*"
+        },
+
+        "pathForSQLFiles": "*",
+        "comparator_settings": {
+            "tablesToCompare": [
+                "***", "***"
+            ],
+            "overrideDefaultSettings": [
+                {
+                    "table_name": {
+                        "searchByPrimaries": false,
+                        "ignorePrimaries": false
+                    }
+                }
+            ]
+        }
+    }
 }
