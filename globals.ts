@@ -7,16 +7,25 @@ const Pool = require('pg-pool');
 
 export let currentDBName: string = config.get('defaultDBName');
 
-let test_pool = new Pool(config.get(currentDBName + '.test_db'));
-let prod_pool = new Pool(config.get(currentDBName + '.prod_db'));
 
-let testPgService = new PgService(test_pool);
-let prodPgService = new PgService(prod_pool);
+
+let testPool = new Pool(config.get(currentDBName + '.test_db'));
+let prodPool = new Pool(config.get(currentDBName + '.prod_db'));
+
+let testPgService = new PgService(testPool);
+let prodPgService = new PgService(prodPool);
 /* tslint:enable */
 
-export const TEST_SCHEMA: string = 'test';
-export const PROD_SCHEMA: string = 'production';
+const dbServices = {
+    test_pool: testPool,
+    prod_pool: prodPool,
+    testPgService: testPgService,
+    prodPgService: prodPgService,
+};
+
+export const TEST_DB: string = 'test';
+export const PROD_DB: string = 'production';
 
 
 const logger = innoLogger.getLogger(config);
-export {testPgService, prodPgService, logger};
+export {logger, dbServices};

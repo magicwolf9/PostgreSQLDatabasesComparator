@@ -4,7 +4,7 @@ import {DiffGenerator, IDifference} from "./diff_generator_service";
 
 const fs = require('fs');
 
-import {logger, PROD_SCHEMA, TEST_SCHEMA} from "../../globals";
+import {logger, PROD_DB, TEST_DB} from "../../globals";
 import {isNull, isUndefined} from "util";
 
 export class SQLGenerator {
@@ -109,7 +109,7 @@ export class SQLGenerator {
 
         SQLcommand += `);\n`;
 
-        if (difference.schema == TEST_SCHEMA)
+        if (difference.schema == TEST_DB)
             return [null, SQLcommand];
 
         return [SQLcommand, null];

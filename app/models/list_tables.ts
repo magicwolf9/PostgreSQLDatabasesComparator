@@ -1,10 +1,9 @@
-import {testPgService} from "../../globals";
-import {prodPgService} from "../../globals";
+import {dbServices, TEST_DB} from "../../globals";
 
-export class ListTablesNamesModel {
+export class TablesListModel {
 
-    static async getTables(DBName: string, isTestDB: boolean, tablesNamesWithPrefixes: Array<string>): Promise<Array<string>> {
-        const pgService = isTestDB ? testPgService : prodPgService;
+    static async getTables(DBName: string, isTestDB: string, tablesNamesWithPrefixes: Array<string>): Promise<Array<string>> {
+        const pgService = isTestDB === TEST_DB ? dbServices.testPgService : dbServices.prodPgService;
 
         const tableNames = await pgService.getRows(`
             SELECT tablename FROM pg_tables 

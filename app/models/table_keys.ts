@@ -1,9 +1,8 @@
-import {testPgService} from "../../globals";
-import {prodPgService} from "../../globals";
+import {dbServices, TEST_DB} from "../../globals";
 
 export class TablePrimariyKeysModel {
-    static async getPrimaries(DBName: string, tableName: string, isTestDB: boolean): Promise<Array<string>> {
-        const pgService = isTestDB ? testPgService : prodPgService;
+    static async getPrimaries(DBName: string, tableName: string, isTestDB: string): Promise<Array<string>> {
+        const pgService = isTestDB === TEST_DB ? dbServices.testPgService : dbServices.prodPgService;
 
         let keys = await pgService.getRows(`
                 SELECT a.attname

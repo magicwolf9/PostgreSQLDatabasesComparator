@@ -5,8 +5,8 @@ import {Comparator, IComparatorSettings, ITableInfo} from "../app/services/compa
 import * as chai from 'chai';
 const assert = chai.assert;
 
-import {TEST_SCHEMA} from "../globals";
-import {PROD_SCHEMA} from "../globals";
+import {TEST_DB} from "../globals";
+import {PROD_DB} from "../globals";
 
 let comparator = new Comparator();
 const tableName = "table";
@@ -190,7 +190,7 @@ describe('Comparator', function () {
             const expectedDiff: IDifference[] = [{
                 type: DiffGenerator.NO_SUCH_ROW,
 
-                schema: PROD_SCHEMA,
+                schema: PROD_DB,
                 primaryKeys: [],
                 table: tableName,
 
@@ -199,7 +199,7 @@ describe('Comparator', function () {
             }, {
                 type: DiffGenerator.NO_SUCH_ROW,
 
-                schema: TEST_SCHEMA,
+                schema: TEST_DB,
                 primaryKeys: [],
                 table: tableName,
 
@@ -294,7 +294,7 @@ describe('Comparator', function () {
             }, {
                 type: DiffGenerator.NO_SUCH_ROW,
 
-                schema: PROD_SCHEMA,
+                schema: PROD_DB,
                 primaryKeys: [],
                 table: tableName,
 
@@ -303,7 +303,7 @@ describe('Comparator', function () {
             }, {
                 type: DiffGenerator.NO_SUCH_ROW,
 
-                schema: TEST_SCHEMA,
+                schema: TEST_DB,
                 primaryKeys: [],
                 table: tableName,
 
@@ -717,7 +717,7 @@ describe('Comparator', function () {
             const expectedDiff: IDifference = {
                 type: DiffGenerator.NO_SUCH_TABLE,
 
-                schema: PROD_SCHEMA,
+                schema: PROD_DB,
                 table: 'table3'
             };
             const expectedTables = ['table1', 'table2'];
@@ -736,12 +736,12 @@ describe('Comparator', function () {
             const expectedDiff: IDifference[] = [{
                 type: DiffGenerator.NO_SUCH_TABLE,
 
-                schema: PROD_SCHEMA,
+                schema: PROD_DB,
                 table: 'table3'
             }, {
                 type: DiffGenerator.NO_SUCH_TABLE,
 
-                schema: TEST_SCHEMA,
+                schema: TEST_DB,
                 table: 'table4'
             }];
             const expectedTables = ['table1', 'table2'];

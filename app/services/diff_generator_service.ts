@@ -1,4 +1,4 @@
-import {TEST_SCHEMA} from "../../globals";
+import {PROD_DB, TEST_DB} from "../../globals";
 
 export interface IDifference {
     type: string;
@@ -16,7 +16,7 @@ export interface IDifference {
     SQLtoFixIt?: string;
 }
 
-export class DiffGenerator{
+export class DiffGenerator {
     tableName: string;
 
     public static readonly NO_SUCH_TABLE: string = 'There is no table with given name';
@@ -36,17 +36,31 @@ export class DiffGenerator{
         };
     }
 
-    generateNoSuchRowDiff(row: Array<any>, schema: string, primaryKeys: Array<string>): IDifference{
-        let valueInTest = schema === TEST_SCHEMA ? null : row;
-        let valueInProd = null;
-        if(valueInTest === null) {
+    generateNoSuchRowDiff(row: Array<any>, db: string, primaryKeys: Array<string>): IDifference {
+        let valueInTest: any;
+        let valueInProd: any;
+
+        switch (db) {
+            case TEST_DB: {
+                valueInTest = null;
+                break;
+            }
+            case PROD_DB: {
+                valueInProd = null;
+                break;
+            }
+            default:
+                break;
+        }
+
+        if (valueInTest === null) {
             valueInProd = row;
         }
 
         return {
             type: DiffGenerator.NO_SUCH_ROW,
 
-            schema: schema,
+            schema: db,
             table: this.tableName,
             primaryKeys: primaryKeys,
 
@@ -66,11 +80,11 @@ export class DiffGenerator{
         }
     }
 
-    generateNoSuchTable(tableName: string, schema: string): IDifference {
+    generateNoSuchTable(tableName: string, db: string): IDifference {
         return {
             type: DiffGenerator.NO_SUCH_TABLE,
 
-            schema: schema,
+            schema: db,
             table: tableName
         }
     }

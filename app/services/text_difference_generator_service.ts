@@ -1,5 +1,5 @@
 import {DiffGenerator, IDifference} from "./diff_generator_service";
-import {PROD_SCHEMA, TEST_SCHEMA} from "../../globals";
+import {PROD_DB, TEST_DB} from "../../globals";
 
 export class TextDiffGenerator{
 
@@ -51,7 +51,7 @@ export class TextDiffGenerator{
             if (difference.columnsInTest.length > 1) {
                 columnText = 'are no columns';
             }
-            textDiffTest = 'There ' + columnText + ' "' + difference.columnsInTest + '" in table "' + difference.table + '" of ' + TEST_SCHEMA + 'schema';
+            textDiffTest = 'There ' + columnText + ' "' + difference.columnsInTest + '" in table "' + difference.table + '" of ' + TEST_DB + 'schema';
         }
 
         if(difference.columnsInProd.length != 0) {
@@ -59,7 +59,7 @@ export class TextDiffGenerator{
             if (difference.columnsInProd.length > 1) {
                 columnText = 'are no columns';
             }
-            textDiffProd = 'There ' + columnText + ' "' + difference.columnsInProd + '" in table "' + difference.table + '" of ' + PROD_SCHEMA + 'schema';
+            textDiffProd = 'There ' + columnText + ' "' + difference.columnsInProd + '" in table "' + difference.table + '" of ' + PROD_DB + 'schema';
         }
 
         if(textDiffTest && textDiffProd)
@@ -73,7 +73,7 @@ export class TextDiffGenerator{
 
     generateNoSuchRow(difference: IDifference): string{
 
-        const rowValue = difference.schema === TEST_SCHEMA ? difference.valueInProd : difference.valueInTest;
+        const rowValue = difference.schema === TEST_DB ? difference.valueInProd : difference.valueInTest;
 
         return 'There is no row with values: ' + JSON.stringify(rowValue) + ' in table "' + difference.table + '" of ' + difference.schema + ' schema';
     }

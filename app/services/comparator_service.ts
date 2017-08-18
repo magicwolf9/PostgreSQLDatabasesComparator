@@ -1,8 +1,8 @@
 import * as _ from 'lodash';
 import {DiffGenerator, IDifference} from "./diff_generator_service";
 
-import {logger, TEST_SCHEMA} from "../../globals";
-import {PROD_SCHEMA} from "../../globals";
+import {logger, TEST_DB} from "../../globals";
+import {PROD_DB} from "../../globals";
 
 export interface ITableInfo {
     tableName: string;
@@ -49,7 +49,7 @@ export class Comparator {
             const rowProd = findRow(rowTest, tableProdInfo);
 
             if (!rowProd) {
-                this.myDifferences.push(this.diffGenerator.generateNoSuchRowDiff(rowTest, PROD_SCHEMA, this.primaryKeys));
+                this.myDifferences.push(this.diffGenerator.generateNoSuchRowDiff(rowTest, PROD_DB, this.primaryKeys));
             } else {
                 tableProdInfo.tableData.splice(tableProdInfo.tableData.indexOf(rowProd), 1);
                 compareRows(rowTest, rowProd);
@@ -58,7 +58,7 @@ export class Comparator {
 
         //make differences from rest of lines in table2
         for (let row of tableProdInfo.tableData) {
-            this.myDifferences.push(this.diffGenerator.generateNoSuchRowDiff(row, TEST_SCHEMA, this.primaryKeys));
+            this.myDifferences.push(this.diffGenerator.generateNoSuchRowDiff(row, TEST_DB, this.primaryKeys));
         }
 
         return this.myDifferences;
@@ -182,10 +182,10 @@ export class Comparator {
         tableListDiffs.forEach(tableName => {
 
             if (testTables.indexOf(tableName) != -1) {
-                schema = PROD_SCHEMA;
+                schema = PROD_DB;
                 testTables.splice(testTables.indexOf(tableName), 1);
             } else {
-                schema = TEST_SCHEMA;
+                schema = TEST_DB;
                 prodTables.splice(prodTables.indexOf(tableName), 1);
             }
 
