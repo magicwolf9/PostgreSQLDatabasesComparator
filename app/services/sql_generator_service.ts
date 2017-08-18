@@ -9,6 +9,8 @@ import {isNull, isUndefined} from "util";
 
 export class SQLGenerator {
 
+    DBName: string;
+
     generateSQLAndFillDiffs(differences: Array<any>): { SQLCommandsTestToProd: string, SQLCommandsProdToTest: string } {
 
         let SQLCommandsTestToProd: string = '';
@@ -61,13 +63,13 @@ export class SQLGenerator {
 
         //TODO разнести в разные файлы
 
-        fs.writeFile(config.get(config.get('schema') + '.pathForSQLFiles') + '/SQLCommandsTestDataToProd', SQLCommandsTestToProd, function (err) {
+        fs.writeFile(config.get(this.DBName + '.pathForSQLFiles') + '/SQLCommandsTestDataToProd', SQLCommandsTestToProd, function (err) {
             if (err) {
                 logger.error(err);
             }
         });
 
-        fs.writeFile(config.get(config.get('schema') + '.pathForSQLFiles') + '/SQLCommandsProdDataToTest', SQLCommandsProdToTest, function (err) {
+        fs.writeFile(config.get(this.DBName + '.pathForSQLFiles') + '/SQLCommandsProdDataToTest', SQLCommandsProdToTest, function (err) {
             if (err) {
                 logger.error(err);
             }

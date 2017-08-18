@@ -33,6 +33,7 @@
   "dependencies": {
     "accept-language-parser": "^1.4.0",
     "config": "^1.25.1",
+    "dotenv": "^4.0.0",
     "innots": "0.0.30",
     "koa-router": "^7.1.1",
     "lodash": "^4.17.4",

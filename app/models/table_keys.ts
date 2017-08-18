@@ -1,11 +1,8 @@
-import * as config from 'config';
 import {testPgService} from "../../globals";
 import {prodPgService} from "../../globals";
 
-const schema = config.get('schema');
-
 export class TablePrimariyKeysModel {
-    static async getPrimaries(tableName: string, isTestDB: boolean): Promise<Array<string>> {
+    static async getPrimaries(DBName: string, tableName: string, isTestDB: boolean): Promise<Array<string>> {
         const pgService = isTestDB ? testPgService : prodPgService;
 
         let keys = await pgService.getRows(`
@@ -13,7 +10,7 @@ export class TablePrimariyKeysModel {
                 FROM   pg_index i
                 JOIN   pg_attribute a ON a.attrelid = i.indrelid
                                      AND a.attnum = ANY(i.indkey)
-                WHERE  i.indrelid = '${schema}.${tableName}'::regclass
+                WHERE  i.indrelid = '${DBName}.${tableName}'::regclass
                 AND    i.indisprimary;`, []);
 
         return keys.map(function (k) {

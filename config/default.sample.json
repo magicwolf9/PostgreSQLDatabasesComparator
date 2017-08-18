@@ -1,5 +1,5 @@
 {
-    "schema": "defSchema",
+    "defaultDBName": "defSchema",
     "port": 8089,
     "url": "/comparator/",
     "logLevel": "DEBUG",

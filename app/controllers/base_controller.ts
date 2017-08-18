@@ -1,14 +1,14 @@
 import * as config from "config";
 import * as _ from 'lodash';
-import {Controller} from "innots";
+import {Controller, PgService} from "innots";
 import {Context} from 'koa';
 import {TableDataModel} from "../models/table_data";
 import {Comparator, IComparatorSettings, ITableInfo} from "../services/comparator_service";
 import {TablePrimariyKeysModel} from "../models/table_keys";
 import {ListTablesNamesModel} from "../models/list_tables";
-import {IDifference} from "../services/diff_generator_service";
-import {TextDiffGenerator} from "../services/text_difference_generator_service";
 import {SQLGenerator} from "../services/sql_generator_service";
+import {isUndefined} from "util";
+import {Pool} from "pg";
 
 
 export class BaseController extends Controller {
@@ -17,22 +17,28 @@ export class BaseController extends Controller {
     SQLGenerator = new SQLGenerator();
     //textDiffsGenerator = new TextDiffGenerator();
 
+    DBName: string;
+
     differences = async (ctx: Context, next: () => any): Promise<void> => {
 
-        let tablesToCompare: Array<string> = config.get(config.get('schema') + '.comparator_settings.tablesToCompare');
+
+        if(isUndefined(ctx.request.query['dbName']) || !config.has(ctx.request.query['dbName'])){
+            require('../../globals').currentDBName = config.get('defaultDBName');
+        } else {
+            require('../../globals').currentDBName = ctx.request.query['dbName'];
+        }
+        this.DBName = require('../../globals').currentDBName;
+
+        this.setPools();
+        this.SQLGenerator.DBName = this.DBName;
+
+        let tablesToCompare: Array<string> = config.get(this.DBName + '.comparator_settings.tablesToCompare');
         let differences = {};
 
-        const allTablesTest: Array<string> = await ListTablesNamesModel.getTables(true);
-        const allTablesProd: Array<string> = await ListTablesNamesModel.getTables(false);
-
-        //fill tablesToCompare for test (replace all ref_* with [ref_.., ref_.., ref_..])
-        const tablesToCompareTest: Array<string> = this.getFullTablesToCompare(allTablesTest, tablesToCompare);
-
-        //fill tablesToCompare for prod
-        const tablesToCompareProd: Array<string> = this.getFullTablesToCompare(allTablesProd, tablesToCompare);
+        const tablesToCompareTest: Array<string> = await ListTablesNamesModel.getTables(this.DBName,true, tablesToCompare);
+        const tablesToCompareProd: Array<string> = await ListTablesNamesModel.getTables(this.DBName, false, tablesToCompare);
 
         //check if tablesToCompare for test and prod have same tables, if no --> make differences for tables
-
         let {tablesToCompare: newTablesToCompare, tableDifferences: tablesDiffs} = this.comparator.compareListOfTablesNamesAndMakeDiffs(tablesToCompareTest, tablesToCompareProd);
 
         differences["DDLDifferences"] = tablesDiffs;
@@ -40,11 +46,11 @@ export class BaseController extends Controller {
 
         for (let tableName of newTablesToCompare) {
 
-            const testTable: ITableInfo = await TableDataModel.getData(tableName, true);
-            const prodTable: ITableInfo = await TableDataModel.getData(tableName, false);
+            const testTable: ITableInfo = await TableDataModel.getData(this.DBName, tableName, true);
+            const prodTable: ITableInfo = await TableDataModel.getData(this.DBName, tableName, false);
 
-            testTable.primaryKeys = await TablePrimariyKeysModel.getPrimaries(tableName, true);
-            prodTable.primaryKeys = await TablePrimariyKeysModel.getPrimaries(tableName, false);
+            testTable.primaryKeys = await TablePrimariyKeysModel.getPrimaries(this.DBName, tableName, true);
+            prodTable.primaryKeys = await TablePrimariyKeysModel.getPrimaries(this.DBName, tableName, false);
 
             const tableDifferences = _.cloneDeep(
                 this.comparator.compareTables(testTable, prodTable, this.getComparatorSettingsForTable(tableName))
@@ -69,7 +75,7 @@ export class BaseController extends Controller {
             ignorePrimaries: false
         };
 
-        const tablesWithOverriddenSettings: Array<any> = config.get(config.get('schema') + '.comparator_settings.overrideDefaultSettings');
+        const tablesWithOverriddenSettings: Array<any> = config.get(this.DBName + '.comparator_settings.overrideDefaultSettings');
 
 
         for (let table of tablesWithOverriddenSettings) {
@@ -104,12 +110,12 @@ export class BaseController extends Controller {
         });
     }
 
-    changeSchema = async (ctx: Context, next: () => any): Promise<void> => {
 
-        //config.set('schema', ctx.schema);
-        ctx.body = '';
-        next();
+    setPools(){
+        require('../../globals').test_pool = new Pool(config.get(this.DBName + '.test_db'));
+        require('../../globals').prod_pool = new Pool(config.get(this.DBName + '.prod_db'));
+
+        require('../../globals').testPgService = new PgService(require('../../globals').test_pool);
+        require('../../globals').prodPgService = new PgService(require('../../globals').prod_pool);
     }
-
-
 }

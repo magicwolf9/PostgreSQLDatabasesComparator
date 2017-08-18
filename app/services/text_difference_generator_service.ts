@@ -1,5 +1,3 @@
-
-
 import {DiffGenerator, IDifference} from "./diff_generator_service";
 import {PROD_SCHEMA, TEST_SCHEMA} from "../../globals";
 
