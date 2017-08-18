@@ -7,13 +7,12 @@ How to use:
 
 Fill config before use
 
-To get differences: localhost:8089/comparator/differences
-To change schema to compare: localhost:8089/comparator/changeSchame?schema=*schemaName* //*schemaName* must be in config
+To get differences: localhost:8089/comparator/differences?dbName=*dbName* //*dbName* must be described in config
 
 Config sample
 
 {
-    "schema": "defSchema", //default schema
+    "defaultDBName": "defSchema", //default schema
     "port": 8089,
     "url": "/comparator/",
     "logLevel": "DEBUG",
