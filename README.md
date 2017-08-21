@@ -7,16 +7,16 @@ How to use:
 
 Fill config before use
 
-To get differences: localhost:8089/comparator/differences?dbName=*dbName* //*dbName* must be described in config
+To get differences: localhost:8089/comparator/differences?dbServiceName=*dbServiceName* //*dbServiceName* must be described in config
 
 Config sample
 
 {
-    "defaultDBName": "defSchema", //default schema
+    "defaultServiceName": "defService", //default service (group of settings)
     "port": 8089,
     "url": "/comparator/",
     "logLevel": "DEBUG",
-    "defSchema": {
+    "defService": {
         "test_db": {
             "host": "*",
             "port": 5432,
@@ -47,7 +47,7 @@ Config sample
             ]
         }
     },
-    "schema2": {
+    "service2": {
         "test_db": {
             "host": "*",
             "port": 5432,
