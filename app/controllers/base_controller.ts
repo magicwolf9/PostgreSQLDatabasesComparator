@@ -42,15 +42,19 @@ export class BaseController extends Controller {
         this.SQLGenerator.DBName = globals.currentServiceName;
 
 
-        let tablesToCompare: Array<string> = config.get(globals.currentServiceName + '.comparator_settings.tablesToCompare');
+        let tablesToCompare: Array<string> =
+            config.get(globals.currentServiceName + '.comparator_settings.tablesToCompare');
         let differences = {};
 
-        const tablesToCompareTest: any = await TablesWithPrimariesListModel.getTables(globals.currentServiceName,TEST_DB, tablesToCompare);
-        const tablesToCompareProd:any = await TablesWithPrimariesListModel.getTables(globals.currentServiceName, PROD_DB, tablesToCompare);
+        const tablesToCompareTest: any =
+            await TablesWithPrimariesListModel.getTables(globals.currentServiceName,TEST_DB, tablesToCompare);
+        const tablesToCompareProd:any =
+            await TablesWithPrimariesListModel.getTables(globals.currentServiceName, PROD_DB, tablesToCompare);
 
         //check if tablesToCompare for test and prod have same tables, if no --> make differences for tables
         //TODO change method and check diffs in primary keys
-        let {tablesToCompare: newTablesToCompare, tableDifferences: tablesDiffs} = this.comparator.compareListOfTablesNamesAndMakeDiffs(tablesToCompareTest, tablesToCompareProd);
+        let {tablesToCompare: newTablesToCompare, tableDifferences: tablesDiffs} =
+            this.comparator.compareListOfTablesNamesAndMakeDiffs(tablesToCompareTest, tablesToCompareProd);
 
         differences["DDLDifferences"] = tablesDiffs;
         differences["ContentDifferences"] = {};
@@ -64,7 +68,8 @@ export class BaseController extends Controller {
             prodTable.primaryKeys = tableAndPrimaries.primaryColumns;
 
             const tableDifferences = _.cloneDeep(
-                this.comparator.compareTables(testTable, prodTable, this.getComparatorSettingsForTable(tableAndPrimaries.tableName))
+                this.comparator.compareTables(testTable, prodTable,
+                    this.getComparatorSettingsForTable(tableAndPrimaries.tableName))
             );
             if(tableDifferences.length > 0)
                 differences["ContentDifferences"][tableAndPrimaries.tableName] = tableDifferences;

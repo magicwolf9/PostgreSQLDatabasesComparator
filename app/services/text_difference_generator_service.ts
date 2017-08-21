@@ -51,7 +51,8 @@ export class TextDiffGenerator{
             if (difference.columnsInTest.length > 1) {
                 columnText = 'are no columns';
             }
-            textDiffTest = 'There ' + columnText + ' "' + difference.columnsInTest + '" in table "' + difference.table + '" of ' + TEST_DB + 'schema';
+            textDiffTest = 'There ' + columnText + ' "' + difference.columnsInTest + '" in table "'
+                + difference.table + '" of ' + TEST_DB + 'schema';
         }
 
         if(difference.columnsInProd.length != 0) {
@@ -59,7 +60,8 @@ export class TextDiffGenerator{
             if (difference.columnsInProd.length > 1) {
                 columnText = 'are no columns';
             }
-            textDiffProd = 'There ' + columnText + ' "' + difference.columnsInProd + '" in table "' + difference.table + '" of ' + PROD_DB + 'schema';
+            textDiffProd = 'There ' + columnText + ' "' + difference.columnsInProd + '" in table "'
+                + difference.table + '" of ' + PROD_DB + 'schema';
         }
 
         if(textDiffTest && textDiffProd)
@@ -75,7 +77,8 @@ export class TextDiffGenerator{
 
         const rowValue = difference.schema === TEST_DB ? difference.valueInProd : difference.valueInTest;
 
-        return 'There is no row with values: ' + JSON.stringify(rowValue) + ' in table "' + difference.table + '" of ' + difference.schema + ' schema';
+        return 'There is no row with values: ' + JSON.stringify(rowValue) + ' in table "' + difference.table
+            + '" of ' + difference.schema + ' schema';
     }
 
     generateDifferentValues(difference: IDifference): string{

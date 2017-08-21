@@ -8,7 +8,9 @@ export interface ITableStructure {
 
 export class TablesWithPrimariesListModel {
 
-    static async getTables(DBName: string, isTestDB: string, tablesNamesWithPrefixes: Array<string>): Promise<Array<ITableStructure>> {
+    static async getTables(DBName: string, isTestDB: string, tablesNamesWithPrefixes: Array<string>)
+        : Promise<Array<ITableStructure>> {
+
         const pgService = isTestDB === TEST_DB ? dbServices.testPgService : dbServices.prodPgService;
 
 
@@ -19,7 +21,8 @@ export class TablesWithPrimariesListModel {
             ON indrelid = (schemaname || '.' || tablename)::regclass AND indisprimary = true
             LEFT JOIN  pg_attribute ON attrelid = indrelid
                                      AND attnum = ANY(indkey)
-            LEFT JOIN  (SELECT unnest AS table_prefix, row_number() OVER (PARTITION BY unnest) AS index from unnest($1::text[])) as table_ordering
+            LEFT JOIN  (SELECT unnest AS table_prefix, row_number() OVER (PARTITION BY unnest) 
+                AS index from unnest($1::text[])) as table_ordering
             ON tablename LIKE table_prefix
             WHERE tablename SIMILAR TO (array_to_string($1::text[], '|'))
             GROUP BY tablename, index

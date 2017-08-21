@@ -63,13 +63,15 @@ export class SQLGenerator {
 
         //TODO разнести в разные файлы
 
-        fs.writeFile(config.get(this.DBName + '.pathForSQLFiles') + '/SQLCommandsTestDataToProd', SQLCommandsTestToProd, function (err) {
+        const pathForTestSQL: string = config.get(this.DBName + '.pathForSQLFiles') + '/SQLCommandsTestDataToProd';
+        fs.writeFile(pathForTestSQL, SQLCommandsTestToProd, function (err) {
             if (err) {
                 logger.error(err);
             }
         });
 
-        fs.writeFile(config.get(this.DBName + '.pathForSQLFiles') + '/SQLCommandsProdDataToTest', SQLCommandsProdToTest, function (err) {
+        const pathForProdSQL: string = config.get(this.DBName + '.pathForSQLFiles') + '/SQLCommandsProdDataToTest';
+        fs.writeFile(pathForProdSQL, SQLCommandsProdToTest, function (err) {
             if (err) {
                 logger.error(err);
             }

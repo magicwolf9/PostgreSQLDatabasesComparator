@@ -1,9 +1,9 @@
 {
-    "defaultDBName": "defSchema",
+    "defaultServiceName": "defService",
     "port": 8089,
     "url": "/comparator/",
     "logLevel": "DEBUG",
-    "defSchema": {
+    "defService": {
         "test_db": {
             "host": "*",
             "port": 5432,
@@ -34,7 +34,7 @@
             ]
         }
     },
-    "schema2": {
+    "service2": {
         "test_db": {
             "host": "*",
             "port": 5432,

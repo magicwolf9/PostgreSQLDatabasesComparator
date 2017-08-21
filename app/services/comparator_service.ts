@@ -30,7 +30,8 @@ export class Comparator {
     uniqueColumnsInTest: Array<string>;
     uniqueColumnsInProd: Array<string>;
 
-    public compareTables(tableTestInfo: ITableInfo, tableProdInfo: ITableInfo, comparatorSettings: IComparatorSettings): Array<IDifference> {
+    public compareTables(tableTestInfo: ITableInfo, tableProdInfo: ITableInfo, comparatorSettings: IComparatorSettings)
+        : Array<IDifference> {
 
         this.tableTestInfo = tableTestInfo;
         this.tableProdInfo = tableProdInfo;
@@ -131,7 +132,8 @@ export class Comparator {
             const value = rowTest[key];
 
             if (this.uniqueColumnsInTest.indexOf(key) == -1 && rowProd[key] != value) {
-                this.myDifferences = this.myDifferences.concat(this.diffGenerator.generateDifferentValuesDiff(rowTest, rowProd, this.primaryKeys));
+                this.myDifferences = this.myDifferences.concat(
+                    this.diffGenerator.generateDifferentValuesDiff(rowTest, rowProd, this.primaryKeys));
                 break;
             }
         }
@@ -145,7 +147,8 @@ export class Comparator {
         this.uniqueColumnsInProd = row2Columns.filter(val => row1Columns.indexOf(val) == -1);
 
         if (this.uniqueColumnsInTest.length > 0 || this.uniqueColumnsInProd.length > 0) {
-            this.myDifferences = this.myDifferences.concat(this.diffGenerator.generateNoSuchColumns(this.uniqueColumnsInTest, this.uniqueColumnsInProd));
+            this.myDifferences = this.myDifferences.concat(
+                this.diffGenerator.generateNoSuchColumns(this.uniqueColumnsInTest, this.uniqueColumnsInProd));
         }
     }
 
@@ -172,7 +175,9 @@ export class Comparator {
         return this.primaryKeys.indexOf(_.snakeCase(key)) != -1;
     }
 
-    compareListOfTablesNamesAndMakeDiffs(testTables: Array<ITableStructure>, prodTables: Array<ITableStructure>): { tablesToCompare: Array<ITableStructure>, tableDifferences: Array<IDifference>} {
+    compareListOfTablesNamesAndMakeDiffs(testTables: Array<ITableStructure>, prodTables: Array<ITableStructure>)
+        :{ tablesToCompare: Array<ITableStructure>, tableDifferences: Array<IDifference> } {
+
         let differences: Array<IDifference> = [];
         let schema: string;
 
