@@ -42,19 +42,17 @@ export class DiffGenerator {
 
         switch (db) {
             case TEST_DB: {
+                valueInProd = row;
                 valueInTest = null;
                 break;
             }
             case PROD_DB: {
                 valueInProd = null;
+                valueInTest = row;
                 break;
             }
             default:
                 break;
-        }
-
-        if (valueInTest === null) {
-            valueInProd = row;
         }
 
         return {

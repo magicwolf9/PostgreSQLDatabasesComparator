@@ -682,7 +682,7 @@ describe('Comparator', function () {
         });
     });
 
-    describe('Comparator.compareListOfTablesNamesAndMakeDiffs', function () {
+    /*describe.skip('Comparator.compareListOfTablesNamesAndMakeDiffs', function () {
 
         beforeEach(clearComparator);
 
@@ -750,5 +750,5 @@ describe('Comparator', function () {
 
             chai.expect([finalListOfTables, differences]).to.eql([expectedTables, expectedDiff]);
         });
-    });
+    });*/
 });

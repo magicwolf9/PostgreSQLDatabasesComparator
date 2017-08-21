@@ -82,7 +82,11 @@ export class SQLGenerator {
     generateForNoSuchRow(difference: IDifference): [string, string] {
         let SQLcommand: string = `INSERT INTO ` + difference.table + ` (`;
 
-        const row = difference.valueInTest ? difference.valueInTest : difference.valueInProd;
+        console.log(difference);
+
+        const row = !isNull(difference.valueInTest) ? difference.valueInTest : difference.valueInProd;
+
+        console.log(row);
 
         Object.keys(row).forEach(key => {
             if (!(difference.primaryKeys.indexOf(_.snakeCase(key)) != -1 && (typeof row[key] == 'number'))) {
@@ -94,6 +98,8 @@ export class SQLGenerator {
         SQLcommand = SQLcommand.substr(0, SQLcommand.length - 2);
 
         SQLcommand += `)\n\t VALUES (`;
+
+        console.log(row);
 
         Object.keys(row).forEach(key => {
 

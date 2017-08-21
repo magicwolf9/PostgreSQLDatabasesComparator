@@ -4,8 +4,7 @@ import {Controller, PgService} from "innots";
 import {Context} from 'koa';
 import {TableDataModel} from "../models/table_data";
 import {Comparator, IComparatorSettings, ITableInfo} from "../services/comparator_service";
-import {TablePrimariyKeysModel} from "../models/table_keys";
-import {TablesListModel} from "../models/list_tables";
+import {TablesWithPrimariesListModel} from "../models/list_tables";
 import {SQLGenerator} from "../services/sql_generator_service";
 import {isUndefined} from "util";
 import {Pool} from "pg";
@@ -16,8 +15,8 @@ const dbServices = globals.dbServices;
 export class BaseController extends Controller {
 
     public readonly serviceNameToDbConfig: any = {
-        kassa: config.get('kassaDbConfig'),
-        kassa2: config.get('kassa2DbConfig'),
+        kassaDbConfig: config.get('kassaDbConfig'),
+        kassa2DbConfig: config.get('kassa2DbConfig'),
     };
 
     comparator = new Comparator();
@@ -26,41 +25,49 @@ export class BaseController extends Controller {
     serviceName: string;
 
     differences = async (ctx: Context, next: () => any): Promise<void> => {
-// validation
-        //if(isUndefined(ctx.request.query['dbServiceName']) || !config.has(ctx.request.query['dbName'])){
+
         const data = {
-            serviceName: 'kassa'
+            serviceName: <string> config.get('defaultServiceName')
         };
+
+        if(!isUndefined(ctx.request.query['dbServiceName']) && config.has(ctx.request.query['dbServiceName'])) {
+            data.serviceName = this.validate(ctx, (validator) => {
+                return validator.isString('dbServiceName', 0, 30)
+            });
+        }
+
         this.serviceName = data.serviceName;
         this.setPools(this.serviceNameToDbConfig[data.serviceName]);
-        this.SQLGenerator.DBName = globals.currentDBName;
+
+        this.SQLGenerator.DBName = globals.currentServiceName;
 
 
-        let tablesToCompare: Array<string> = config.get(globals.currentDBName + '.comparator_settings.tablesToCompare');
+        let tablesToCompare: Array<string> = config.get(globals.currentServiceName + '.comparator_settings.tablesToCompare');
         let differences = {};
 
-        const tablesToCompareTest: Array<string> = await TablesListModel.getTables(globals.currentDBName,TEST_DB, tablesToCompare);
-        const tablesToCompareProd: Array<string> = await TablesListModel.getTables(globals.currentDBName, PROD_DB, tablesToCompare);
+        const tablesToCompareTest: any = await TablesWithPrimariesListModel.getTables(globals.currentServiceName,TEST_DB, tablesToCompare);
+        const tablesToCompareProd:any = await TablesWithPrimariesListModel.getTables(globals.currentServiceName, PROD_DB, tablesToCompare);
 
         //check if tablesToCompare for test and prod have same tables, if no --> make differences for tables
+        //TODO change method and check diffs in primary keys
         let {tablesToCompare: newTablesToCompare, tableDifferences: tablesDiffs} = this.comparator.compareListOfTablesNamesAndMakeDiffs(tablesToCompareTest, tablesToCompareProd);
 
         differences["DDLDifferences"] = tablesDiffs;
         differences["ContentDifferences"] = {};
 
-        for (let tableName of newTablesToCompare) {
+        for (let tableAndPrimaries of newTablesToCompare) {
 
-            const testTable: ITableInfo = await TableDataModel.getData(globals.currentDBName, tableName, TEST_DB);
-            const prodTable: ITableInfo = await TableDataModel.getData(globals.currentDBName, tableName, PROD_DB);
+            const testTable: ITableInfo = await TableDataModel.getData(tableAndPrimaries.tableName, TEST_DB);
+            const prodTable: ITableInfo = await TableDataModel.getData(tableAndPrimaries.tableName, PROD_DB);
 
-            testTable.primaryKeys = await TablePrimariyKeysModel.getPrimaries(globals.currentDBName, tableName, TEST_DB);
-            prodTable.primaryKeys = await TablePrimariyKeysModel.getPrimaries(globals.currentDBName, tableName, PROD_DB);
+            testTable.primaryKeys = tableAndPrimaries.primaryColumns;
+            prodTable.primaryKeys = tableAndPrimaries.primaryColumns;
 
             const tableDifferences = _.cloneDeep(
-                this.comparator.compareTables(testTable, prodTable, this.getComparatorSettingsForTable(tableName))
+                this.comparator.compareTables(testTable, prodTable, this.getComparatorSettingsForTable(tableAndPrimaries.tableName))
             );
             if(tableDifferences.length > 0)
-                differences["ContentDifferences"][tableName] = tableDifferences;
+                differences["ContentDifferences"][tableAndPrimaries.tableName] = tableDifferences;
         }
 
         let {SQLCommandsTestToProd: testToProd, SQLCommandsProdToTest: prodToTest} =
@@ -75,6 +82,8 @@ export class BaseController extends Controller {
     };
 
     getComparatorSettingsForTable(tableName: string): IComparatorSettings {
+        console.log(tableName);
+
         const defaultSettings: IComparatorSettings = {
             searchByPrimaries: true,
             ignorePrimaries: false

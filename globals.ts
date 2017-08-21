@@ -5,12 +5,12 @@ import {logger as innoLogger} from 'innots';
 /* tslint:disable */
 const Pool = require('pg-pool');
 
-export let currentDBName: string = config.get('defaultDBName');
+export let currentServiceName: string = config.get('defaultServiceName');
 
 
 
-let testPool = new Pool(config.get(currentDBName + '.test_db'));
-let prodPool = new Pool(config.get(currentDBName + '.prod_db'));
+let testPool = new Pool(config.get(currentServiceName + '.test_db'));
+let prodPool = new Pool(config.get(currentServiceName + '.prod_db'));
 
 let testPgService = new PgService(testPool);
 let prodPgService = new PgService(prodPool);
