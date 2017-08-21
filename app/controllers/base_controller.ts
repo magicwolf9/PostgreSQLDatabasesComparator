@@ -6,10 +6,10 @@ import {TableDataModel} from "../models/table_data";
 import {Comparator, IComparatorSettings, ITableInfo} from "../services/comparator_service";
 import {TablesWithPrimariesListModel} from "../models/list_tables";
 import {SQLGenerator} from "../services/sql_generator_service";
-import {isUndefined} from "util";
 import {Pool} from "pg";
-import * as globals from  "../../globals";
+import * as globals from "../../globals";
 import {PROD_DB, TEST_DB} from "../../globals";
+
 const dbServices = globals.dbServices;
 
 export class BaseController extends Controller {
@@ -21,38 +21,35 @@ export class BaseController extends Controller {
 
     comparator = new Comparator();
     SQLGenerator = new SQLGenerator();
-    //textDiffsGenerator = new TextDiffGenerator();
-    serviceName: string;
 
-    differences = async (ctx: Context, next: () => any): Promise<void> => {
+    getDifferences = async (ctx: Context, next: () => any): Promise<void> => {
 
-        const data = {
-            serviceName: <string> config.get('defaultServiceName')
-        };
+        const data = this.validate(ctx, (validator) => {
+            return {
+                serviceName: validator.optional.isString('dbServiceName', 0, 30)
+            }
+        });
 
-        if(!isUndefined(ctx.request.query['dbServiceName']) && config.has(ctx.request.query['dbServiceName'])) {
-            data.serviceName = this.validate(ctx, (validator) => {
-                return validator.isString('dbServiceName', 0, 30)
-            });
+        if (!config.has(data.serviceName)) {
+            data.serviceName = config.get<string>('defaultServiceName');
         }
 
-        this.serviceName = data.serviceName;
-        this.setPools(this.serviceNameToDbConfig[data.serviceName]);
+        dbServices.currentServiceName = data.serviceName;
+        this.setPools(this.serviceNameToDbConfig[dbServices.currentServiceName ]);
 
-        this.SQLGenerator.DBName = globals.currentServiceName;
+        this.SQLGenerator.serviceName = dbServices.currentServiceName;
 
 
         let tablesToCompare: Array<string> =
-            config.get(globals.currentServiceName + '.comparator_settings.tablesToCompare');
+            config.get(dbServices.currentServiceName + '.comparator_settings.tablesToCompare');
         let differences = {};
 
         const tablesToCompareTest: any =
-            await TablesWithPrimariesListModel.getTables(globals.currentServiceName,TEST_DB, tablesToCompare);
-        const tablesToCompareProd:any =
-            await TablesWithPrimariesListModel.getTables(globals.currentServiceName, PROD_DB, tablesToCompare);
+            await TablesWithPrimariesListModel.getTables(dbServices.currentServiceName, TEST_DB, tablesToCompare);
+        const tablesToCompareProd: any =
+            await TablesWithPrimariesListModel.getTables(dbServices.currentServiceName, PROD_DB, tablesToCompare);
 
-        //check if tablesToCompare for test and prod have same tables, if no --> make differences for tables
-        //TODO change method and check diffs in primary keys
+        //check if tablesToCompare for test and prod have same tables, if no --> make getDifferences for tables
         let {tablesToCompare: newTablesToCompare, tableDifferences: tablesDiffs} =
             this.comparator.compareListOfTablesNamesAndMakeDiffs(tablesToCompareTest, tablesToCompareProd);
 
@@ -71,7 +68,7 @@ export class BaseController extends Controller {
                 this.comparator.compareTables(testTable, prodTable,
                     this.getComparatorSettingsForTable(tableAndPrimaries.tableName))
             );
-            if(tableDifferences.length > 0)
+            if (tableDifferences.length > 0)
                 differences["ContentDifferences"][tableAndPrimaries.tableName] = tableDifferences;
         }
 
@@ -81,7 +78,6 @@ export class BaseController extends Controller {
         differences["SQLTestToProd"] = testToProd;
         differences["SQLProdToTest"] = prodToTest;
 
-        //ctx.body = this.textDiffsGenerator.generateTexts(differences);
         ctx.body = differences;
         next();
     };
@@ -95,7 +91,7 @@ export class BaseController extends Controller {
         };
 
         const tablesWithOverriddenSettings: Array<any> =
-            config.get(this.serviceName + '.comparator_settings.overrideDefaultSettings');
+            config.get(dbServices.currentServiceName + '.comparator_settings.overrideDefaultSettings');
 
 
         for (let table of tablesWithOverriddenSettings) {
@@ -107,7 +103,8 @@ export class BaseController extends Controller {
         return defaultSettings;
     }
 
-    setPools(dbConfig: any){
+    setPools(dbConfig: any) {
+
         dbServices.test_pool = new Pool(dbConfig.test_db);
         dbServices.prod_pool = new Pool(dbConfig.prod_db);
 

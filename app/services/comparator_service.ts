@@ -57,7 +57,7 @@ export class Comparator {
             }
         });
 
-        //make differences from rest of lines in table2
+        //make getDifferences from rest of lines in table2
         for (let row of tableProdInfo.tableData) {
             this.myDifferences.push(this.diffGenerator.generateNoSuchRowDiff(row, TEST_DB, this.primaryKeys));
         }
@@ -127,7 +127,7 @@ export class Comparator {
     }
 
     compareRows(rowTest: Array<any>, rowProd: Array<any>) {
-        // check columns for equal values, make differences is not
+        // check columns for equal values, make getDifferences is not
         for (let key of Object.keys(rowTest)) {
             const value = rowTest[key];
 

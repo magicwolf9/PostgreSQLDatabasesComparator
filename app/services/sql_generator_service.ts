@@ -9,7 +9,7 @@ import {isNull, isUndefined} from "util";
 
 export class SQLGenerator {
 
-    DBName: string;
+    serviceName: string;
 
     generateSQLAndFillDiffs(differences: Array<any>): { SQLCommandsTestToProd: string, SQLCommandsProdToTest: string } {
 
@@ -63,14 +63,14 @@ export class SQLGenerator {
 
         //TODO разнести в разные файлы
 
-        const pathForTestSQL: string = config.get(this.DBName + '.pathForSQLFiles') + '/SQLCommandsTestDataToProd';
+        const pathForTestSQL: string = config.get(this.serviceName + '.pathForSQLFiles') + '/SQLCommandsTestDataToProd';
         fs.writeFile(pathForTestSQL, SQLCommandsTestToProd, function (err) {
             if (err) {
                 logger.error(err);
             }
         });
 
-        const pathForProdSQL: string = config.get(this.DBName + '.pathForSQLFiles') + '/SQLCommandsProdDataToTest';
+        const pathForProdSQL: string = config.get(this.serviceName + '.pathForSQLFiles') + '/SQLCommandsProdDataToTest';
         fs.writeFile(pathForProdSQL, SQLCommandsProdToTest, function (err) {
             if (err) {
                 logger.error(err);
@@ -128,7 +128,7 @@ export class SQLGenerator {
         let commandForTestToProd: string = `UPDATE kassa.${difference.table} SET `;
         let commandForProdToTest: string = `UPDATE kassa.${difference.table} SET `;
 
-        //get only differences in values
+        //get only getDifferences in values
         let rowTest: any = _.cloneDeep(difference.valueInTest);
         let rowProd: any = _.cloneDeep(difference.valueInProd);
 

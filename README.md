@@ -1,13 +1,13 @@
 # PostgreSQLDatabasesComparator
 That service can connect to 2 PostgreSQL databases and check values of certain tables.
-As a result differences in values are shown to the user and  are generated SQL commands to fix the differences. 
+As a result getDifferences in values are shown to the user and  are generated SQL commands to fix the getDifferences.
 It is used to compare test and production databases of a product.
 
 How to use: 
 
 Fill config before use
 
-To get differences: localhost:8089/comparator/differences
+To get getDifferences: localhost:8089/comparator/getDifferences
 To change schema to compare: localhost:8089/comparator/changeSchame?schema=*schemaName* //*schemaName* must be in config
 
 Config sample

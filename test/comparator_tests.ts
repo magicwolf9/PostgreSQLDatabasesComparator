@@ -692,9 +692,9 @@ describe('Comparator', function () {
             const testTables = ['table1', 'table2', 'table3'];
             const prodTables = ['table1', 'table2', 'table3'];
 
-            let {tablesToCompare: finalListOfTables, tableDifferences: differences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
+            let {tablesToCompare: finalListOfTables, tableDifferences: getDifferences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
 
-            chai.expect([finalListOfTables, differences]).to.eql([testTables,[]]);
+            chai.expect([finalListOfTables, getDifferences]).to.eql([testTables,[]]);
         });
 
         it('should return empty diffs array on equal values in arrays but different order', function (){
@@ -703,9 +703,9 @@ describe('Comparator', function () {
             const testTables = ['table1', 'table3', 'table2'];
             const prodTables = ['table2', 'table1', 'table3'];
 
-            let {tablesToCompare: finalListOfTables, tableDifferences: differences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
+            let {tablesToCompare: finalListOfTables, tableDifferences: getDifferences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
 
-            chai.expect([finalListOfTables, differences]).to.eql([testTables,[]]);
+            chai.expect([finalListOfTables, getDifferences]).to.eql([testTables,[]]);
         });
 
         it('should return edited list of tables and one diff on different values in arrays', function (){
@@ -722,9 +722,9 @@ describe('Comparator', function () {
             };
             const expectedTables = ['table1', 'table2'];
 
-            let {tablesToCompare: finalListOfTables, tableDifferences: differences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
+            let {tablesToCompare: finalListOfTables, tableDifferences: getDifferences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
 
-            chai.expect([finalListOfTables, differences]).to.eql([expectedTables,[expectedDiff]]);
+            chai.expect([finalListOfTables, getDifferences]).to.eql([expectedTables,[expectedDiff]]);
         });
 
         it('should return edited list of tables and diffs on different values in arrays', function (){
@@ -746,9 +746,9 @@ describe('Comparator', function () {
             }];
             const expectedTables = ['table1', 'table2'];
 
-            let {tablesToCompare: finalListOfTables, tableDifferences: differences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
+            let {tablesToCompare: finalListOfTables, tableDifferences: getDifferences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
 
-            chai.expect([finalListOfTables, differences]).to.eql([expectedTables, expectedDiff]);
+            chai.expect([finalListOfTables, getDifferences]).to.eql([expectedTables, expectedDiff]);
         });
     });*/
 });
