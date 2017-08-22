@@ -7,6 +7,7 @@ const assert = chai.assert;
 
 import {TEST_DB} from "../globals";
 import {PROD_DB} from "../globals";
+import {ITableStructure} from "../app/models/list_tables";
 
 let comparator = new Comparator();
 const tableName = "table";
@@ -682,15 +683,41 @@ describe('Comparator', function () {
         });
     });
 
-    /*describe.skip('Comparator.compareListOfTablesNamesAndMakeDiffs', function () {
+    describe('Comparator.compareListOfTablesNamesAndMakeDiffs', function () {
 
         beforeEach(clearComparator);
 
         it('should return empty diffs array on equal values and order in arrays', function (){
             comparator.primaryKeys = ['key1'];
 
-            const testTables = ['table1', 'table2', 'table3'];
-            const prodTables = ['table1', 'table2', 'table3'];
+            const testTables: Array<ITableStructure> = [
+                {
+                    primaryColumns: [],
+                    tableName: 'table1'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table2'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table3'
+                }
+            ];
+            const prodTables: Array<ITableStructure> = [
+                {
+                    primaryColumns: [],
+                    tableName: 'table1'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table2'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table3'
+                }
+            ];
 
             let {tablesToCompare: finalListOfTables, tableDifferences: getDifferences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
 
@@ -700,8 +727,34 @@ describe('Comparator', function () {
         it('should return empty diffs array on equal values in arrays but different order', function (){
             comparator.primaryKeys = ['key1'];
 
-            const testTables = ['table1', 'table3', 'table2'];
-            const prodTables = ['table2', 'table1', 'table3'];
+            const testTables: Array<ITableStructure> = [
+                {
+                    primaryColumns: [],
+                    tableName: 'table1'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table3'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table2'
+                }
+            ];
+            const prodTables: Array<ITableStructure> = [
+                {
+                    primaryColumns: [],
+                    tableName: 'table2'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table1'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table3'
+                }
+            ];
 
             let {tablesToCompare: finalListOfTables, tableDifferences: getDifferences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
 
@@ -711,8 +764,31 @@ describe('Comparator', function () {
         it('should return edited list of tables and one diff on different values in arrays', function (){
             comparator.primaryKeys = ['key1'];
 
-            const testTables = ['table1', 'table3', 'table2'];
-            const prodTables = ['table2', 'table1'];
+            const testTables: Array<ITableStructure> = [
+                {
+                    primaryColumns: [],
+                    tableName: 'table1'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table3'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table2'
+                }
+            ];
+
+            const prodTables: Array<ITableStructure>  = [
+                {
+                    primaryColumns: [],
+                    tableName: 'table2'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table1'
+                }
+            ];
 
             const expectedDiff: IDifference = {
                 type: DiffGenerator.NO_SUCH_TABLE,
@@ -720,7 +796,17 @@ describe('Comparator', function () {
                 schema: PROD_DB,
                 table: 'table3'
             };
-            const expectedTables = ['table1', 'table2'];
+
+            const expectedTables: Array<ITableStructure> = [
+                {
+                    primaryColumns: [],
+                    tableName: 'table1'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table2'
+                }
+            ];
 
             let {tablesToCompare: finalListOfTables, tableDifferences: getDifferences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
 
@@ -730,8 +816,35 @@ describe('Comparator', function () {
         it('should return edited list of tables and diffs on different values in arrays', function (){
             comparator.primaryKeys = ['key1'];
 
-            const testTables = ['table1', 'table3', 'table2'];
-            const prodTables = ['table2', 'table1', 'table4'];
+            const testTables: Array<ITableStructure> = [
+                {
+                    primaryColumns: [],
+                    tableName: 'table1'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table3'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table2'
+                }
+            ];
+
+            const prodTables: Array<ITableStructure>  = [
+                {
+                    primaryColumns: [],
+                    tableName: 'table2'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table1'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table4'
+                }
+            ];
 
             const expectedDiff: IDifference[] = [{
                 type: DiffGenerator.NO_SUCH_TABLE,
@@ -744,11 +857,20 @@ describe('Comparator', function () {
                 schema: TEST_DB,
                 table: 'table4'
             }];
-            const expectedTables = ['table1', 'table2'];
+            const expectedTables: Array<ITableStructure> = [
+                {
+                    primaryColumns: [],
+                    tableName: 'table1'
+                },
+                {
+                    primaryColumns: [],
+                    tableName: 'table2'
+                }
+            ];
 
             let {tablesToCompare: finalListOfTables, tableDifferences: getDifferences} = comparator.compareListOfTablesNamesAndMakeDiffs(testTables, prodTables);
 
             chai.expect([finalListOfTables, getDifferences]).to.eql([expectedTables, expectedDiff]);
         });
-    });*/
+    });
 });
