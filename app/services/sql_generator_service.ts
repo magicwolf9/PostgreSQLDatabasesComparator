@@ -61,14 +61,14 @@ export class SQLGenerator {
 
         });
 
-        const pathForTestSQL: string = config.get(this.serviceName + '.pathForSQLFiles') + '/SQLCommandsTestDataToProd';
+        const pathForTestSQL: string = config.get<string>(this.serviceName + '.pathForSQLFiles') + '/SQLCommandsTestDataToProd';
         fs.writeFile(pathForTestSQL, SQLCommandsTestToProd, function (err) {
             if (err) {
                 logger.error(err);
             }
         });
 
-        const pathForProdSQL: string = config.get(this.serviceName + '.pathForSQLFiles') + '/SQLCommandsProdDataToTest';
+        const pathForProdSQL: string = config.get<string>(this.serviceName + '.pathForSQLFiles') + '/SQLCommandsProdDataToTest';
         fs.writeFile(pathForProdSQL, SQLCommandsProdToTest, function (err) {
             if (err) {
                 logger.error(err);
@@ -170,14 +170,17 @@ export class SQLGenerator {
 
         difference.primaryKeys.forEach(key => {
 
+            key = _.camelCase(key);
+            let columnName = _.snakeCase(key);
+
             if (typeof rowTest[key] != 'number') {
 
-                commandForTestToProd += key + ` = '` + rowTest[key.toString()] + `' AND `;
-                commandForProdToTest += key + ` = '` + rowProd[key.toString()] + `' AND `;
+                commandForTestToProd += columnName + ` = '` + rowTest[key] + `' AND `;
+                commandForProdToTest += columnName + ` = '` + rowProd[key] + `' AND `;
             } else {
 
-                commandForTestToProd += key + ` = ` + rowTest[key.toString()] + ` AND `;
-                commandForProdToTest += key + ` = ` + rowProd[key.toString()] + ` AND `;
+                commandForTestToProd += columnName + ` = ` + rowTest[key] + ` AND `;
+                commandForProdToTest += columnName + ` = ` + rowProd[key] + ` AND `;
             }
         });
 

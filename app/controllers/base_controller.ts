@@ -56,7 +56,7 @@ export class BaseController extends Controller {
 
     async getTablesToCompare(): Promise<{ tablesToCompare: Array<ITableStructure>, tablesDifferences: Array<IDifference> }> {
         let tablesToCompare: Array<string> =
-            config.get(dbServices.currentServiceName + '.comparator_settings.tablesToCompare');
+            config.get<Array<string>>(dbServices.currentServiceName + '.comparator_settings.tablesToCompare');
 
         const tablesToCompareTest: any =
             await TablesWithPrimariesListModel.getTables(dbServices.currentServiceName, TEST_DB, tablesToCompare);
@@ -95,7 +95,7 @@ export class BaseController extends Controller {
         };
 
         const tablesWithOverriddenSettings: Array<any> =
-            config.get(dbServices.currentServiceName + '.comparator_settings.overrideDefaultSettings');
+            config.get<Array<any>>(dbServices.currentServiceName + '.comparator_settings.overrideDefaultSettings');
 
 
         for (let table of tablesWithOverriddenSettings) {
@@ -115,7 +115,7 @@ export class BaseController extends Controller {
         dbServices.currentServiceName = serviceName;
         this.SQLGenerator.serviceName = serviceName;
 
-        const dbConfig: any = config.get(serviceName);
+        const dbConfig: any = config.get<any>(serviceName);
 
         dbServices.test_pool = new Pool(dbConfig.test_db);
         dbServices.prod_pool = new Pool(dbConfig.prod_db);
