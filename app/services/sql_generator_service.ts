@@ -4,7 +4,7 @@ import {DiffGenerator, IDifference} from "./diff_generator_service";
 
 const fs = require('fs');
 
-import {logger, PROD_DB, TEST_DB} from "../../globals";
+import {logger, PROD_DB, TEST_DB, dbServices} from "../../globals";
 import {isNull, isUndefined} from "util";
 
 export class SQLGenerator {
@@ -79,13 +79,19 @@ export class SQLGenerator {
     }
 
     generateForNoSuchRow(difference: IDifference): [string, string] {
-        let SQLcommand: string = `INSERT INTO ` + difference.table + ` (`;
 
-        console.log(difference);
+        let schemaName: string;
+        let row: any;
 
-        const row = !isNull(difference.valueInTest) ? difference.valueInTest : difference.valueInProd;
+        if(!isNull(difference.valueInTest)){
+            schemaName = config.get<string>(dbServices.currentServiceName + '.prod_db.schemaName');
+            row = difference.valueInTest;
+        } else{
+            schemaName = config.get<string>(dbServices.currentServiceName + '.test_db.schemaName');
+            row = difference.valueInProd;
+        }
 
-        console.log(row);
+        let SQLcommand: string = `INSERT INTO ${schemaName}.${difference.table} (`;
 
         Object.keys(row).forEach(key => {
             if (!(difference.primaryKeys.indexOf(_.snakeCase(key)) != -1 && (typeof row[key] == 'number'))) {
@@ -122,8 +128,11 @@ export class SQLGenerator {
 
     generateForDifferentValues(difference: IDifference): [string, string] {
 
-        let commandForTestToProd: string = `UPDATE kassa.${difference.table} SET `;
-        let commandForProdToTest: string = `UPDATE kassa.${difference.table} SET `;
+        let schemaName: string = config.get<string>(dbServices.currentServiceName + '.prod_db.schemaName');
+        let commandForTestToProd: string = `UPDATE ${schemaName}.${difference.table} SET `;
+
+        schemaName = config.get<string>(dbServices.currentServiceName + '.test_db.schemaName');
+        let commandForProdToTest: string = `UPDATE ${schemaName}.${difference.table} SET `;
 
         //get only getDifferences in values
         let rowTest: any = _.cloneDeep(difference.valueInTest);
@@ -160,7 +169,6 @@ export class SQLGenerator {
         rowProd = difference.valueInProd;
 
         difference.primaryKeys.forEach(key => {
-            key = _.camelCase(key);
 
             if (typeof rowTest[key] != 'number') {
 
@@ -177,8 +185,8 @@ export class SQLGenerator {
         commandForTestToProd = commandForTestToProd.substr(0, commandForTestToProd.length - 4);
         commandForProdToTest = commandForProdToTest.substr(0, commandForProdToTest.length - 4);
 
-        commandForTestToProd += `);\n`;
-        commandForProdToTest += `);\n`;
+        commandForTestToProd += `;\n`;
+        commandForProdToTest += `;\n`;
 
         return [commandForTestToProd, commandForProdToTest]
     }

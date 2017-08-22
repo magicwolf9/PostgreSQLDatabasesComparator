@@ -10,13 +10,13 @@ export class TableDataModel {
         switch (isTestDB) {
             case TEST_DB: {
                 pgService = dbServices.testPgService;
-                schemaAndTable = config.get(dbServices.currentServiceName + '.test_db' + '.database')
+                schemaAndTable = config.get(dbServices.currentServiceName + '.test_db' + '.schemaName')
                     + '.' + tableName;
                 break;
             }
             case PROD_DB: {
                 pgService = dbServices.prodPgService;
-                schemaAndTable = config.get(dbServices.currentServiceName + '.prod_db' + '.database')
+                schemaAndTable = config.get(dbServices.currentServiceName + '.prod_db' + '.schemaName')
                     + '.' + tableName;
                 break;
             }

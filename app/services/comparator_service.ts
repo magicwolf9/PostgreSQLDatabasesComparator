@@ -154,12 +154,14 @@ export class Comparator {
     deletePrimaryColumnsFromTables() {
         this.tableTestInfo.tableData.forEach(row => {
             this.primaryKeys.forEach(key => {
+                key = _.camelCase(key);
                 delete row[key];
             });
             row = _.pickBy(row, v => v !== undefined);
         });
         this.tableProdInfo.tableData.forEach(row => {
             this.primaryKeys.forEach(key => {
+                key = _.camelCase(key);
                 delete row[key];
             });
             row = _.pickBy(row, v => v !== undefined);
