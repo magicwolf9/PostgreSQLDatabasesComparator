@@ -447,7 +447,7 @@ describe('Comparator', function () {
                 columnsInProd: []
             };
 
-            comparator.checkTablesColumns(rowTest, rowProd);
+            comparator.checkTablesStructure(rowTest, rowProd);
 
             chai.expect(comparator.myDifferences).to.eql([expectedDiff]);
             comparator.myDifferences = [];
@@ -514,7 +514,7 @@ describe('Comparator', function () {
                 valueInProd: rowProd,
             }];
 
-            comparator.checkTablesColumns(rowTest, rowProd);
+            comparator.checkTablesStructure(rowTest, rowProd);
             comparator.compareRows(rowTest, rowProd);
 
             chai.expect(comparator.myDifferences).to.eql(expectedDiffs);
@@ -542,7 +542,7 @@ describe('Comparator', function () {
                 valueInProd: rowProd,
             }];
 
-            comparator.checkTablesColumns(rowTest, rowProd);
+            comparator.checkTablesStructure(rowTest, rowProd);
             comparator.compareRows(rowTest, rowProd);
 
             chai.expect(comparator.myDifferences).to.eql(expectedDiffs);

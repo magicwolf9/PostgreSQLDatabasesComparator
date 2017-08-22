@@ -30,8 +30,7 @@ export class Comparator {
     uniqueColumnsInTest: Array<string>;
     uniqueColumnsInProd: Array<string>;
 
-    public compareTables(tableTestInfo: ITableInfo, tableProdInfo: ITableInfo, comparatorSettings: IComparatorSettings)
-        : Array<IDifference> {
+    public compareTables(tableTestInfo: ITableInfo, tableProdInfo: ITableInfo, comparatorSettings: IComparatorSettings): Array<IDifference> {
 
         this.tableTestInfo = tableTestInfo;
         this.tableProdInfo = tableProdInfo;
@@ -44,7 +43,7 @@ export class Comparator {
         this.myDifferences.length = 0;
         let {findRow: findRow, compareRows: compareRows} = this.configureComparator(comparatorSettings);
 
-        this.checkTablesColumns(tableTestInfo.tableData[0], tableProdInfo.tableData[0]);
+        this.checkTablesStructure(tableTestInfo.tableData[0], tableProdInfo.tableData[0]);
 
         tableTestInfo.tableData.forEach(rowTest => {
             const rowProd = findRow(rowTest, tableProdInfo);
@@ -65,7 +64,7 @@ export class Comparator {
         return this.myDifferences;
     };
 
-    configureComparator(comparatorSettings: IComparatorSettings): {findRow: any, compareRows: any} {
+    configureComparator(comparatorSettings: IComparatorSettings): { findRow: any, compareRows: any } {
         // edit data according to settings: search by primary / search by same values/ ignore primary
 
         let findRow;
@@ -139,7 +138,7 @@ export class Comparator {
         }
     }
 
-    checkTablesColumns(rowTest: any, rowProd: any) {
+    checkTablesStructure(rowTest: any, rowProd: any) {
         const row1Columns: Array<string> = Object.keys(rowTest);
         const row2Columns: Array<string> = Object.keys(rowProd);
 
@@ -176,21 +175,21 @@ export class Comparator {
     }
 
     compareListOfTablesNamesAndMakeDiffs(testTables: Array<ITableStructure>, prodTables: Array<ITableStructure>)
-        :{ tablesToCompare: Array<ITableStructure>, tableDifferences: Array<IDifference> } {
+        : { tablesToCompare: Array<ITableStructure>, tableDifferences: Array<IDifference> } {
 
         let differences: Array<IDifference> = [];
         let schema: string;
 
-        let testTablesNames = testTables.map(tableStructure =>{
+        let testTablesNames = testTables.map(tableStructure => {
             return tableStructure.tableName
         });
-        let prodTablesNames = prodTables.map(tableStructure =>{
+        let prodTablesNames = prodTables.map(tableStructure => {
             return tableStructure.tableName
         });
 
         //making testTables equals prodTables and making diffs
         let tableListDiffs: Array<string> = _.differenceWith(testTablesNames, prodTablesNames, _.isEqual);
-        tableListDiffs.push(_.differenceWith(prodTablesNames, testTablesNames, _.isEqual));
+        tableListDiffs = tableListDiffs.concat(_.differenceWith(prodTablesNames, testTablesNames, _.isEqual));
 
         tableListDiffs.forEach(tableName => {
 

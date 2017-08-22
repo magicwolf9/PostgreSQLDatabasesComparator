@@ -21,6 +21,6 @@ const pathToCompare: string = config.get('url') + 'getDifferences';
 router
     .get(pathToCompare, baseController.getDifferences);
 
-logger.info(`URL to compare databases from config : ` + pathToCompare + `?dbServiceName=*databaseName*  databaseName must be described in config file`);
+logger.info(`URL to compare databases from config : ` + pathToCompare + `?dbServiceName=*dbServiceName*  dbServiceName must be described in config file`);
 
 export {router};

@@ -1,4 +1,4 @@
-import {dbServices, TEST_DB} from "../../globals";
+import {dbServices, PROD_DB, TEST_DB} from "../../globals";
 import {isUndefined} from "util";
 
 export interface ITableStructure {
@@ -8,11 +8,22 @@ export interface ITableStructure {
 
 export class TablesWithPrimariesListModel {
 
-    static async getTables(DBName: string, isTestDB: string, tablesNamesWithPrefixes: Array<string>)
-        : Promise<Array<ITableStructure>> {
+    static async getTables(DBName: string, isTestDB: string, tablesNamesWithPrefixes: Array<string>): Promise<Array<ITableStructure>> {
 
-        const pgService = isTestDB === TEST_DB ? dbServices.testPgService : dbServices.prodPgService;
-
+        let pgService;
+        switch (isTestDB) {
+            case TEST_DB: {
+                pgService = dbServices.testPgService;
+                break;
+            }
+            case PROD_DB: {
+                pgService = dbServices.prodPgService;
+                break;
+            }
+            default: {
+                break;
+            }
+        }
 
         const result = await pgService.getRows(`
             SELECT tablename, json_agg(attname) as pk_columns
@@ -31,7 +42,7 @@ export class TablesWithPrimariesListModel {
         return result.map(value => {
             let primaryColumnNames = value.pkColumns;
 
-            if(isUndefined(primaryColumnNames)){
+            if (isUndefined(primaryColumnNames)) {
                 primaryColumnNames = [];
             }
 

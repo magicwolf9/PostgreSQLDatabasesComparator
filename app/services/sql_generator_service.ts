@@ -61,8 +61,6 @@ export class SQLGenerator {
 
         });
 
-        //TODO разнести в разные файлы
-
         const pathForTestSQL: string = config.get(this.serviceName + '.pathForSQLFiles') + '/SQLCommandsTestDataToProd';
         fs.writeFile(pathForTestSQL, SQLCommandsTestToProd, function (err) {
             if (err) {
@@ -76,7 +74,6 @@ export class SQLGenerator {
                 logger.error(err);
             }
         });
-
 
         return {SQLCommandsTestToProd: SQLCommandsTestToProd, SQLCommandsProdToTest: SQLCommandsProdToTest};
     }

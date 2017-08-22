@@ -20,7 +20,7 @@ export class DiffGenerator {
     tableName: string;
 
     public static readonly NO_SUCH_TABLE: string = 'There is no table with given name';
-    public static readonly NO_SUCH_COLUMN: string = 'There is no such column';
+    public static readonly NO_SUCH_COLUMN: string = 'There is no such columns';
     public static readonly NO_SUCH_ROW: string = 'There is no row with same values';
     public static readonly DIFFERENT_VALUES: string = 'Values in rows differ';
 

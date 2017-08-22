@@ -4,20 +4,16 @@ import {Controller, PgService} from "innots";
 import {Context} from 'koa';
 import {TableDataModel} from "../models/table_data";
 import {Comparator, IComparatorSettings, ITableInfo} from "../services/comparator_service";
-import {TablesWithPrimariesListModel} from "../models/list_tables";
+import {ITableStructure, TablesWithPrimariesListModel} from "../models/list_tables";
 import {SQLGenerator} from "../services/sql_generator_service";
 import {Pool} from "pg";
 import * as globals from "../../globals";
 import {PROD_DB, TEST_DB} from "../../globals";
+import {IDifference} from "../services/diff_generator_service";
 
 const dbServices = globals.dbServices;
 
 export class BaseController extends Controller {
-
-    public readonly serviceNameToDbConfig: any = {
-        kassaDbConfig: config.get('kassaDbConfig'),
-        kassa2DbConfig: config.get('kassa2DbConfig'),
-    };
 
     comparator = new Comparator();
     SQLGenerator = new SQLGenerator();
@@ -29,47 +25,23 @@ export class BaseController extends Controller {
                 serviceName: validator.optional.isString('dbServiceName', 0, 30)
             }
         });
+        this.setNewServiceName(data.serviceName);
 
-        if (!config.has(data.serviceName)) {
-            data.serviceName = config.get<string>('defaultServiceName');
-        }
-
-        dbServices.currentServiceName = data.serviceName;
-        this.setPools(this.serviceNameToDbConfig[dbServices.currentServiceName ]);
-
-        this.SQLGenerator.serviceName = dbServices.currentServiceName;
-
-
-        let tablesToCompare: Array<string> =
-            config.get(dbServices.currentServiceName + '.comparator_settings.tablesToCompare');
         let differences = {};
-
-        const tablesToCompareTest: any =
-            await TablesWithPrimariesListModel.getTables(dbServices.currentServiceName, TEST_DB, tablesToCompare);
-        const tablesToCompareProd: any =
-            await TablesWithPrimariesListModel.getTables(dbServices.currentServiceName, PROD_DB, tablesToCompare);
-
-        //check if tablesToCompare for test and prod have same tables, if no --> make getDifferences for tables
-        let {tablesToCompare: newTablesToCompare, tableDifferences: tablesDiffs} =
-            this.comparator.compareListOfTablesNamesAndMakeDiffs(tablesToCompareTest, tablesToCompareProd);
+        let {tablesToCompare: tablesToCompare, tablesDifferences: tablesDiffs} = await this.getTablesToCompare();
 
         differences["DDLDifferences"] = tablesDiffs;
+        if (tablesDiffs.length === 0)
+            differences["DDLDifferences"] = `There are no differences in DDL`;
+
         differences["ContentDifferences"] = {};
 
-        for (let tableAndPrimaries of newTablesToCompare) {
+        for (let tableAndPrimaries of tablesToCompare) {
 
-            const testTable: ITableInfo = await TableDataModel.getData(tableAndPrimaries.tableName, TEST_DB);
-            const prodTable: ITableInfo = await TableDataModel.getData(tableAndPrimaries.tableName, PROD_DB);
+            const diffsToAdd = await this.getTwoTablesInfoAndCompare(tableAndPrimaries);
 
-            testTable.primaryKeys = tableAndPrimaries.primaryColumns;
-            prodTable.primaryKeys = tableAndPrimaries.primaryColumns;
-
-            const tableDifferences = _.cloneDeep(
-                this.comparator.compareTables(testTable, prodTable,
-                    this.getComparatorSettingsForTable(tableAndPrimaries.tableName))
-            );
-            if (tableDifferences.length > 0)
-                differences["ContentDifferences"][tableAndPrimaries.tableName] = tableDifferences;
+            if (diffsToAdd.length > 0)
+                differences["ContentDifferences"][tableAndPrimaries.tableName] = diffsToAdd;
         }
 
         let {SQLCommandsTestToProd: testToProd, SQLCommandsProdToTest: prodToTest} =
@@ -81,6 +53,38 @@ export class BaseController extends Controller {
         ctx.body = differences;
         next();
     };
+
+    async getTablesToCompare(): Promise<{ tablesToCompare: Array<ITableStructure>, tablesDifferences: Array<IDifference> }> {
+        let tablesToCompare: Array<string> =
+            config.get(dbServices.currentServiceName + '.comparator_settings.tablesToCompare');
+
+        const tablesToCompareTest: any =
+            await TablesWithPrimariesListModel.getTables(dbServices.currentServiceName, TEST_DB, tablesToCompare);
+        const tablesToCompareProd: any =
+            await TablesWithPrimariesListModel.getTables(dbServices.currentServiceName, PROD_DB, tablesToCompare);
+
+        //check if tablesToCompare for test and prod have same tables, if no --> make getDifferences for tables
+        let {tablesToCompare: newTablesToCompare, tableDifferences: tablesDiffs} =
+            this.comparator.compareListOfTablesNamesAndMakeDiffs(tablesToCompareTest, tablesToCompareProd);
+
+        return {tablesToCompare: newTablesToCompare, tablesDifferences: tablesDiffs};
+    }
+
+    async getTwoTablesInfoAndCompare(tableAndPrimaries: ITableStructure): Promise<Array<IDifference>> {
+        const testTable: ITableInfo = await TableDataModel.getData(tableAndPrimaries.tableName, TEST_DB);
+        const prodTable: ITableInfo = await TableDataModel.getData(tableAndPrimaries.tableName, PROD_DB);
+
+        testTable.primaryKeys = tableAndPrimaries.primaryColumns;
+        prodTable.primaryKeys = tableAndPrimaries.primaryColumns;
+
+        const tableDifferences = _.cloneDeep(
+            this.comparator.compareTables(testTable, prodTable,
+                this.getComparatorSettingsForTable(tableAndPrimaries.tableName))
+        );
+
+        return tableDifferences;
+    }
+
 
     getComparatorSettingsForTable(tableName: string): IComparatorSettings {
         console.log(tableName);
@@ -103,7 +107,15 @@ export class BaseController extends Controller {
         return defaultSettings;
     }
 
-    setPools(dbConfig: any) {
+    setNewServiceName(serviceName: string) {
+        if (!config.has(serviceName)) {
+            serviceName = config.get<string>('defaultServiceName');
+        }
+
+        dbServices.currentServiceName = serviceName;
+        this.SQLGenerator.serviceName = serviceName;
+
+        const dbConfig: any = config.get(serviceName);
 
         dbServices.test_pool = new Pool(dbConfig.test_db);
         dbServices.prod_pool = new Pool(dbConfig.prod_db);
