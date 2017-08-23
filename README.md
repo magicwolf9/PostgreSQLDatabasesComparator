@@ -1,6 +1,6 @@
 # PostgreSQLDatabasesComparator
 That service can connect to 2 PostgreSQL databases and check values of certain tables.
-As a result differences in values are shown to the user and  are generated SQL commands to fix the differences. 
+As a result getDifferences in values are shown to the user and  are generated SQL commands to fix the getDifferences.
 It is used to compare test and production databases of a product.
 
 How to use: 

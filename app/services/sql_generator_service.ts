@@ -4,12 +4,12 @@ import {DiffGenerator, IDifference} from "./diff_generator_service";
 
 const fs = require('fs');
 
-import {logger, PROD_SCHEMA, TEST_SCHEMA} from "../../globals";
+import {logger, PROD_DB, TEST_DB, dbServices} from "../../globals";
 import {isNull, isUndefined} from "util";
 
 export class SQLGenerator {
 
-    DBName: string;
+    serviceName: string;
 
     generateSQLAndFillDiffs(differences: Array<any>): { SQLCommandsTestToProd: string, SQLCommandsProdToTest: string } {
 
@@ -61,28 +61,37 @@ export class SQLGenerator {
 
         });
 
-        //TODO разнести в разные файлы
-
-        fs.writeFile(config.get(this.DBName + '.pathForSQLFiles') + '/SQLCommandsTestDataToProd', SQLCommandsTestToProd, function (err) {
+        const pathForTestSQL: string = config.get<string>(this.serviceName + '.pathForSQLFiles') + '/SQLCommandsTestDataToProd';
+        fs.writeFile(pathForTestSQL, SQLCommandsTestToProd, function (err) {
             if (err) {
                 logger.error(err);
             }
         });
 
-        fs.writeFile(config.get(this.DBName + '.pathForSQLFiles') + '/SQLCommandsProdDataToTest', SQLCommandsProdToTest, function (err) {
+        const pathForProdSQL: string = config.get<string>(this.serviceName + '.pathForSQLFiles') + '/SQLCommandsProdDataToTest';
+        fs.writeFile(pathForProdSQL, SQLCommandsProdToTest, function (err) {
             if (err) {
                 logger.error(err);
             }
         });
-
 
         return {SQLCommandsTestToProd: SQLCommandsTestToProd, SQLCommandsProdToTest: SQLCommandsProdToTest};
     }
 
     generateForNoSuchRow(difference: IDifference): [string, string] {
-        let SQLcommand: string = `INSERT INTO ` + difference.table + ` (`;
 
-        const row = difference.valueInTest ? difference.valueInTest : difference.valueInProd;
+        let schemaName: string;
+        let row: any;
+
+        if(!isNull(difference.valueInTest)){
+            schemaName = config.get<string>(dbServices.currentServiceName + '.prod_db.schemaName');
+            row = difference.valueInTest;
+        } else{
+            schemaName = config.get<string>(dbServices.currentServiceName + '.test_db.schemaName');
+            row = difference.valueInProd;
+        }
+
+        let SQLcommand: string = `INSERT INTO ${schemaName}.${difference.table} (`;
 
         Object.keys(row).forEach(key => {
             if (!(difference.primaryKeys.indexOf(_.snakeCase(key)) != -1 && (typeof row[key] == 'number'))) {
@@ -94,6 +103,8 @@ export class SQLGenerator {
         SQLcommand = SQLcommand.substr(0, SQLcommand.length - 2);
 
         SQLcommand += `)\n\t VALUES (`;
+
+        console.log(row);
 
         Object.keys(row).forEach(key => {
 
@@ -109,7 +120,7 @@ export class SQLGenerator {
 
         SQLcommand += `);\n`;
 
-        if (difference.schema == TEST_SCHEMA)
+        if (difference.schema == TEST_DB)
             return [null, SQLcommand];
 
         return [SQLcommand, null];
@@ -117,10 +128,13 @@ export class SQLGenerator {
 
     generateForDifferentValues(difference: IDifference): [string, string] {
 
-        let commandForTestToProd: string = `UPDATE kassa.${difference.table} SET `;
-        let commandForProdToTest: string = `UPDATE kassa.${difference.table} SET `;
+        let schemaName: string = config.get<string>(dbServices.currentServiceName + '.prod_db.schemaName');
+        let commandForTestToProd: string = `UPDATE ${schemaName}.${difference.table} SET `;
 
-        //get only differences in values
+        schemaName = config.get<string>(dbServices.currentServiceName + '.test_db.schemaName');
+        let commandForProdToTest: string = `UPDATE ${schemaName}.${difference.table} SET `;
+
+        //get only getDifferences in values
         let rowTest: any = _.cloneDeep(difference.valueInTest);
         let rowProd: any = _.cloneDeep(difference.valueInProd);
 
@@ -155,16 +169,18 @@ export class SQLGenerator {
         rowProd = difference.valueInProd;
 
         difference.primaryKeys.forEach(key => {
+
             key = _.camelCase(key);
+            let columnName = _.snakeCase(key);
 
             if (typeof rowTest[key] != 'number') {
 
-                commandForTestToProd += key + ` = '` + rowTest[key.toString()] + `' AND `;
-                commandForProdToTest += key + ` = '` + rowProd[key.toString()] + `' AND `;
+                commandForTestToProd += columnName + ` = '` + rowTest[key] + `' AND `;
+                commandForProdToTest += columnName + ` = '` + rowProd[key] + `' AND `;
             } else {
 
-                commandForTestToProd += key + ` = ` + rowTest[key.toString()] + ` AND `;
-                commandForProdToTest += key + ` = ` + rowProd[key.toString()] + ` AND `;
+                commandForTestToProd += columnName + ` = ` + rowTest[key] + ` AND `;
+                commandForProdToTest += columnName + ` = ` + rowProd[key] + ` AND `;
             }
         });
 
@@ -172,8 +188,8 @@ export class SQLGenerator {
         commandForTestToProd = commandForTestToProd.substr(0, commandForTestToProd.length - 4);
         commandForProdToTest = commandForProdToTest.substr(0, commandForProdToTest.length - 4);
 
-        commandForTestToProd += `);\n`;
-        commandForProdToTest += `);\n`;
+        commandForTestToProd += `;\n`;
+        commandForProdToTest += `;\n`;
 
         return [commandForTestToProd, commandForProdToTest]
     }

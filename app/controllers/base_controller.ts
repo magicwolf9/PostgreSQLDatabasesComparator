@@ -4,78 +4,98 @@ import {Controller, PgService} from "innots";
 import {Context} from 'koa';
 import {TableDataModel} from "../models/table_data";
 import {Comparator, IComparatorSettings, ITableInfo} from "../services/comparator_service";
-import {TablePrimariyKeysModel} from "../models/table_keys";
-import {ListTablesNamesModel} from "../models/list_tables";
+import {ITableStructure, TablesWithPrimariesListModel} from "../models/list_tables";
 import {SQLGenerator} from "../services/sql_generator_service";
-import {isUndefined} from "util";
 import {Pool} from "pg";
+import * as globals from "../../globals";
+import {PROD_DB, TEST_DB} from "../../globals";
+import {IDifference} from "../services/diff_generator_service";
 
+const dbServices = globals.dbServices;
 
 export class BaseController extends Controller {
 
     comparator = new Comparator();
     SQLGenerator = new SQLGenerator();
-    //textDiffsGenerator = new TextDiffGenerator();
 
-    DBName: string;
+    getDifferences = async (ctx: Context, next: () => any): Promise<void> => {
 
-    differences = async (ctx: Context, next: () => any): Promise<void> => {
+        const data = this.validate(ctx, (validator) => {
+            return {
+                serviceName: validator.optional.isString('dbServiceName', 0, 30)
+            }
+        });
+        this.setNewServiceName(data.serviceName);
 
-
-        if(isUndefined(ctx.request.query['dbName']) || !config.has(ctx.request.query['dbName'])){
-            require('../../globals').currentDBName = config.get('defaultDBName');
-        } else {
-            require('../../globals').currentDBName = ctx.request.query['dbName'];
-        }
-        this.DBName = require('../../globals').currentDBName;
-
-        this.setPools();
-        this.SQLGenerator.DBName = this.DBName;
-
-        let tablesToCompare: Array<string> = config.get(this.DBName + '.comparator_settings.tablesToCompare');
         let differences = {};
-
-        const tablesToCompareTest: Array<string> = await ListTablesNamesModel.getTables(this.DBName,true, tablesToCompare);
-        const tablesToCompareProd: Array<string> = await ListTablesNamesModel.getTables(this.DBName, false, tablesToCompare);
-
-        //check if tablesToCompare for test and prod have same tables, if no --> make differences for tables
-        let {tablesToCompare: newTablesToCompare, tableDifferences: tablesDiffs} = this.comparator.compareListOfTablesNamesAndMakeDiffs(tablesToCompareTest, tablesToCompareProd);
+        let {tablesToCompare: tablesToCompare, tablesDifferences: tablesDiffs} = await this.getTablesToCompare();
 
         differences["DDLDifferences"] = tablesDiffs;
+        if (tablesDiffs.length === 0)
+            differences["DDLDifferences"] = `There are no differences in DDL`;
+
         differences["ContentDifferences"] = {};
 
-        for (let tableName of newTablesToCompare) {
+        for (let tableAndPrimaries of tablesToCompare) {
 
-            const testTable: ITableInfo = await TableDataModel.getData(this.DBName, tableName, true);
-            const prodTable: ITableInfo = await TableDataModel.getData(this.DBName, tableName, false);
+            const diffsToAdd = await this.getTwoTablesInfoAndCompare(tableAndPrimaries);
 
-            testTable.primaryKeys = await TablePrimariyKeysModel.getPrimaries(this.DBName, tableName, true);
-            prodTable.primaryKeys = await TablePrimariyKeysModel.getPrimaries(this.DBName, tableName, false);
-
-            const tableDifferences = _.cloneDeep(
-                this.comparator.compareTables(testTable, prodTable, this.getComparatorSettingsForTable(tableName))
-            );
-            if(tableDifferences.length > 0)
-                differences["ContentDifferences"][tableName] = tableDifferences;
+            if (diffsToAdd.length > 0)
+                differences["ContentDifferences"][tableAndPrimaries.tableName] = diffsToAdd;
         }
 
-        let {SQLCommandsTestToProd: testToProd, SQLCommandsProdToTest: prodToTest}= this.SQLGenerator.generateSQLAndFillDiffs(differences["ContentDifferences"]);
+        let {SQLCommandsTestToProd: testToProd, SQLCommandsProdToTest: prodToTest} =
+            this.SQLGenerator.generateSQLAndFillDiffs(differences["ContentDifferences"]);
 
         differences["SQLTestToProd"] = testToProd;
         differences["SQLProdToTest"] = prodToTest;
 
-        //ctx.body = this.textDiffsGenerator.generateTexts(differences);
         ctx.body = differences;
         next();
     };
 
+    async getTablesToCompare(): Promise<{ tablesToCompare: Array<ITableStructure>, tablesDifferences: Array<IDifference> }> {
+        let tablesToCompare: Array<string> =
+            config.get<Array<string>>(dbServices.currentServiceName + '.comparator_settings.tablesToCompare');
+
+        const tablesToCompareTest: any =
+            await TablesWithPrimariesListModel.getTables(dbServices.currentServiceName, TEST_DB, tablesToCompare);
+        const tablesToCompareProd: any =
+            await TablesWithPrimariesListModel.getTables(dbServices.currentServiceName, PROD_DB, tablesToCompare);
+
+        //check if tablesToCompare for test and prod have same tables, if no --> make getDifferences for tables
+        let {tablesToCompare: newTablesToCompare, tableDifferences: tablesDiffs} =
+            this.comparator.compareListOfTablesNamesAndMakeDiffs(tablesToCompareTest, tablesToCompareProd);
+
+        return {tablesToCompare: newTablesToCompare, tablesDifferences: tablesDiffs};
+    }
+
+    async getTwoTablesInfoAndCompare(tableAndPrimaries: ITableStructure): Promise<Array<IDifference>> {
+        const testTable: ITableInfo = await TableDataModel.getData(tableAndPrimaries.tableName, TEST_DB);
+        const prodTable: ITableInfo = await TableDataModel.getData(tableAndPrimaries.tableName, PROD_DB);
+
+        testTable.primaryKeys = tableAndPrimaries.primaryColumns;
+        prodTable.primaryKeys = tableAndPrimaries.primaryColumns;
+
+        const tableDifferences = _.cloneDeep(
+            this.comparator.compareTables(testTable, prodTable,
+                this.getComparatorSettingsForTable(tableAndPrimaries.tableName))
+        );
+
+        return tableDifferences;
+    }
+
+
     getComparatorSettingsForTable(tableName: string): IComparatorSettings {
+        console.log(tableName);
+
         const defaultSettings: IComparatorSettings = {
             searchByPrimaries: true,
             ignorePrimaries: false
         };
 
-        const tablesWithOverriddenSettings: Array<any> = config.get(this.DBName + '.comparator_settings.overrideDefaultSettings');
+        const tablesWithOverriddenSettings: Array<any> =
+            config.get<Array<any>>(dbServices.currentServiceName + '.comparator_settings.overrideDefaultSettings');
 
 
         for (let table of tablesWithOverriddenSettings) {
@@ -87,35 +107,20 @@ export class BaseController extends Controller {
         return defaultSettings;
     }
 
-    getFullTablesToCompare(listOfTables: Array<string>, listToCompareWithShortcuts: Array<string>): Array<string> {
-        let tablesToCompareFull: Array<string> = [];
+    setNewServiceName(serviceName: string) {
+        if (!config.has(serviceName)) {
+            serviceName = config.get<string>('defaultServiceName');
+        }
 
-        listToCompareWithShortcuts.forEach(tableName => {
-            if (tableName.endsWith('*')) {
-                //table name is a shortcut (example: ref_*)
-                tablesToCompareFull = tablesToCompareFull.concat(this.getTablesNamesFromShortcut(tableName, listOfTables));
-            } else {
-                tablesToCompareFull = tablesToCompareFull.concat(tableName);
-            }
-        });
+        dbServices.currentServiceName = serviceName;
+        this.SQLGenerator.serviceName = serviceName;
 
-        return tablesToCompareFull;
-    }
+        const dbConfig: any = config.get<any>(serviceName);
 
-    getTablesNamesFromShortcut(shortcut: string, listOfTables: Array<string>): Array<string> {
-        let editedShortcut: string = shortcut.substr(0, shortcut.indexOf('*'));
+        dbServices.test_pool = new Pool(dbConfig.test_db);
+        dbServices.prod_pool = new Pool(dbConfig.prod_db);
 
-        return listOfTables.filter(tableName => {
-            return tableName.startsWith(editedShortcut);
-        });
-    }
-
-
-    setPools(){
-        require('../../globals').test_pool = new Pool(config.get(this.DBName + '.test_db'));
-        require('../../globals').prod_pool = new Pool(config.get(this.DBName + '.prod_db'));
-
-        require('../../globals').testPgService = new PgService(require('../../globals').test_pool);
-        require('../../globals').prodPgService = new PgService(require('../../globals').prod_pool);
+        dbServices.testPgService = new PgService(dbServices.test_pool);
+        dbServices.prodPgService = new PgService(dbServices.prod_pool);
     }
 }

@@ -1,4 +1,4 @@
-import {TEST_SCHEMA} from "../../globals";
+import {PROD_DB, TEST_DB} from "../../globals";
 
 export interface IDifference {
     type: string;
@@ -16,11 +16,11 @@ export interface IDifference {
     SQLtoFixIt?: string;
 }
 
-export class DiffGenerator{
+export class DiffGenerator {
     tableName: string;
 
     public static readonly NO_SUCH_TABLE: string = 'There is no table with given name';
-    public static readonly NO_SUCH_COLUMN: string = 'There is no such column';
+    public static readonly NO_SUCH_COLUMN: string = 'There is no such columns';
     public static readonly NO_SUCH_ROW: string = 'There is no row with same values';
     public static readonly DIFFERENT_VALUES: string = 'Values in rows differ';
 
@@ -36,17 +36,29 @@ export class DiffGenerator{
         };
     }
 
-    generateNoSuchRowDiff(row: Array<any>, schema: string, primaryKeys: Array<string>): IDifference{
-        let valueInTest = schema === TEST_SCHEMA ? null : row;
-        let valueInProd = null;
-        if(valueInTest === null) {
-            valueInProd = row;
+    generateNoSuchRowDiff(row: Array<any>, db: string, primaryKeys: Array<string>): IDifference {
+        let valueInTest: any;
+        let valueInProd: any;
+
+        switch (db) {
+            case TEST_DB: {
+                valueInProd = row;
+                valueInTest = null;
+                break;
+            }
+            case PROD_DB: {
+                valueInProd = null;
+                valueInTest = row;
+                break;
+            }
+            default:
+                break;
         }
 
         return {
             type: DiffGenerator.NO_SUCH_ROW,
 
-            schema: schema,
+            schema: db,
             table: this.tableName,
             primaryKeys: primaryKeys,
 
@@ -66,11 +78,11 @@ export class DiffGenerator{
         }
     }
 
-    generateNoSuchTable(tableName: string, schema: string): IDifference {
+    generateNoSuchTable(tableName: string, db: string): IDifference {
         return {
             type: DiffGenerator.NO_SUCH_TABLE,
 
-            schema: schema,
+            schema: db,
             table: tableName
         }
     }

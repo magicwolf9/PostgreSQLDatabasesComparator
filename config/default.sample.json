@@ -1,10 +1,11 @@
 {
-    "defaultDBName": "defSchema",
+    "defaultServiceName": "defService",
     "port": 8089,
     "url": "/comparator/",
     "logLevel": "DEBUG",
-    "defSchema": {
+    "defService": {
         "test_db": {
+            "schemaName": "*",
             "host": "*",
             "port": 5432,
             "database": "*",
@@ -12,6 +13,7 @@
             "password": "*"
         },
         "prod_db": {
+            "schemaName": "*",
             "host": "*",
             "port": 5432,
             "database": "*",
@@ -34,8 +36,9 @@
             ]
         }
     },
-    "schema2": {
+    "service2": {
         "test_db": {
+            "schemaName": "*",
             "host": "*",
             "port": 5432,
             "database": "*",
@@ -43,6 +46,7 @@
             "password": "*"
         },
         "prod_db": {
+            "schemaName": "*",
             "host": "*",
             "port": 5432,
             "database": "*",
