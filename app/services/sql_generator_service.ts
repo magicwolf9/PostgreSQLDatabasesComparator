@@ -50,8 +50,8 @@ export class SQLGenerator {
                         SQLCommandsTestToProd += commandTestToProd;
                         SQLCommandsProdToTest += commandProdToTest;
 
-                        diffForTable.SQLtoFixIt = `Fix by transfer test data to prod: ` + commandTestToProd + `\n 
-                                Fix by transfer prod data to test: ` + commandProdToTest;
+                        diffForTable.SQLtoFixIt = `Test ---> prod: ` + commandTestToProd + `\r\n 
+                                Prod ---> test: ` + commandProdToTest;
                         break;
                     }
                     default:
@@ -102,7 +102,7 @@ export class SQLGenerator {
         //delete last `, `
         SQLcommand = SQLcommand.substr(0, SQLcommand.length - 2);
 
-        SQLcommand += `)\n\t VALUES (`;
+        SQLcommand += `)\r\n\t VALUES (`;
 
         console.log(row);
 
@@ -118,7 +118,7 @@ export class SQLGenerator {
         //delete last `, `
         SQLcommand = SQLcommand.substr(0, SQLcommand.length - 2);
 
-        SQLcommand += `);\n`;
+        SQLcommand += `);\r\n`;
 
         if (difference.schema == TEST_DB)
             return [null, SQLcommand];
@@ -162,8 +162,8 @@ export class SQLGenerator {
         commandForProdToTest = commandForProdToTest.substr(0, commandForProdToTest.length - 2);
 
         //add 'where'
-        commandForTestToProd += `\n\t WHERE `;
-        commandForProdToTest += `\n\t WHERE `;
+        commandForTestToProd += `\r\n\t WHERE `;
+        commandForProdToTest += `\r\n\t WHERE `;
 
         rowTest = difference.valueInTest;
         rowProd = difference.valueInProd;
@@ -188,8 +188,8 @@ export class SQLGenerator {
         commandForTestToProd = commandForTestToProd.substr(0, commandForTestToProd.length - 4);
         commandForProdToTest = commandForProdToTest.substr(0, commandForProdToTest.length - 4);
 
-        commandForTestToProd += `;\n`;
-        commandForProdToTest += `;\n`;
+        commandForTestToProd += `;\r\n`;
+        commandForProdToTest += `;\r\n`;
 
         return [commandForTestToProd, commandForProdToTest]
     }
