@@ -1,7 +1,5 @@
 # PostgreSQLDatabasesComparator
-That service can connect to 2 PostgreSQL databases and check values of certain tables.
-As a result differences in values are shown to the user and  are generated SQL commands to fix the differences. 
-It is used to compare test and production databases of a product.
+This application is built for comparation of testing and production services PostgreSQL databases. It generates SQL fixing differences.
 
 How to use: 
 
@@ -18,6 +16,7 @@ Config sample
     "logLevel": "DEBUG",
     "defService": {
         "test_db": {
+            "schemaName": "*",
             "host": "*",
             "port": 5432,
             "database": "*",
@@ -25,6 +24,7 @@ Config sample
             "password": "*"
         },
         "prod_db": {
+            "schemaName": "*",
             "host": "*",
             "port": 5432,
             "database": "*",
@@ -49,6 +49,7 @@ Config sample
     },
     "service2": {
         "test_db": {
+            "schemaName": "*",
             "host": "*",
             "port": 5432,
             "database": "*",
@@ -56,6 +57,7 @@ Config sample
             "password": "*"
         },
         "prod_db": {
+            "schemaName": "*",
             "host": "*",
             "port": 5432,
             "database": "*",
@@ -77,5 +79,55 @@ Config sample
                 }
             ]
         }
+    }
+}
+
+Responce example:
+{
+    result: {
+        DDLDifferences: "There are no differences in DDL",
+        ContentDifferences: 
+        {
+            table_name: [
+                {
+                    type: "There is no row with same values",
+                    schema: "production",
+                    table: "tableName",
+                    primaryKeys: [
+                        "column1"
+                    ],
+                    valueInTest: {
+                        column1: "valueOfColumn1",
+                        column2: "valueOfColumn2",
+                        column3: "valueOfColumn3"
+                    },
+                    valueInProd: null,
+                    SQLtoFixIt: "INSERT INTO schema_name.table_name (..columns..) VALUES (..values..); "
+                }
+            ],
+            table2_name: [
+                {
+                    type: "Values in rows differ",
+                    table: "table2_name",
+                    primaryKeys: [
+                        "column1",
+                        "column2"
+                    ],
+                    valueInTest: {
+                        column1: "valueOfTestColumn1",
+                        column2: "valueOfTestColumn2",
+                        column3: "valueOfTestColumn3"
+                    },
+                    valueInProd: {
+                        column1: "valueOfProdColumn1",
+                        column2: "valueOfProdColumn2",
+                        column3: "valueOfProdColumn3"
+                    },
+                    SQLtoFixIt: "Test ---> prod: UPDATE schema_name.table2_name SET column3 = 'valueOfTestColumn3' WHERE column1 = 'valueOfProdColumn1' AND column2 = 'valueOfProdColumn2' ; Prod ---> test: UPDATE schema_name.table2_name SET column3 = 'valueOfProdColumn3' WHERE column1 = 'valueOfTestColumn1' AND column2 = 'valueOfTestColumn2' "
+                },
+            ]
+        }
+        SQLTestToProd: "*listOfSQLCommands*",
+        SQLProdToTest: "*listOfSQLCommands*"
     }
 }
