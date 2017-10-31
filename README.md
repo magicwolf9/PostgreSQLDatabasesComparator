@@ -8,7 +8,7 @@ Fill config before use
 To get differences: localhost:8089/comparator/differences?dbServiceName=*dbServiceName* //*dbServiceName* must be described in config
 
 Config sample
-
+```
 {
     "defaultServiceName": "defService", //default service (group of settings)
     "port": 8089,
@@ -81,8 +81,9 @@ Config sample
         }
     }
 }
-
+```
 Responce example:
+```
 {
     result: {
         DDLDifferences: "There are no differences in DDL",
@@ -131,3 +132,4 @@ Responce example:
         SQLProdToTest: "*listOfSQLCommands*"
     }
 }
+```
