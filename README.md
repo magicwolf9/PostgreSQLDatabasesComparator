@@ -8,7 +8,7 @@ Fill config before use
 To get differences: localhost:8089/comparator/differences?dbServiceName=*dbServiceName* //*dbServiceName* must be described in config
 
 Config sample
-
+```JavaScript
 {
     "defaultServiceName": "defService", //default service (group of settings)
     "port": 8089,
@@ -68,21 +68,24 @@ Config sample
         "pathForSQLFiles": "*",
         "comparator_settings": {
             "tablesToCompare": [
-                "***", "***" 
+                "***", "***"
             ],
             "overrideDefaultSettings": [
                 {
                     "table_name": {
                         "searchByPrimaries": false,
-                        "ignorePrimaries": false 
+                        "ignorePrimaries": false
                     }
                 }
             ]
         }
-    }
+    },
+    "ignoreValuesPattern": "" // RegExp describing the pattern of values in columns, which must not be considered different from the second DB (write without //), value for tests - ".*test.*"
 }
-
+```
 Responce example:
+
+```JavaScript
 {
     result: {
         DDLDifferences: "There are no differences in DDL",
@@ -131,3 +134,4 @@ Responce example:
         SQLProdToTest: "*listOfSQLCommands*"
     }
 }
+```
