@@ -2,7 +2,7 @@ import * as _ from 'lodash';
 import {DiffGenerator, IDifference} from "./diff_generator_service";
 
 import {logger, TEST_DB} from "../../globals";
-import {PROD_DB} from "../../globals";
+import {PROD_DB, ignoreValuesPattern} from "../../globals";
 import {ITableStructure} from "../models/list_tables";
 import {isNull} from "util";
 
@@ -130,10 +130,12 @@ export class Comparator {
         for (let key of Object.keys(rowTest)) {
             const value = rowTest[key];
 
-            if (this.uniqueColumnsInTest.indexOf(key) == -1 && rowProd[key] != value) {
-                this.myDifferences = this.myDifferences.concat(
-                    this.diffGenerator.generateDifferentValuesDiff(rowTest, rowProd, this.primaryKeys));
-                break;
+            if(ignoreValuesPattern != "" && !(new RegExp(ignoreValuesPattern, "gi").test(value)) && !(new RegExp(ignoreValuesPattern, "gi").test(rowProd[key]))){
+                if (this.uniqueColumnsInTest.indexOf(key) == -1 && rowProd[key] != value) {
+                    this.myDifferences = this.myDifferences.concat(
+                        this.diffGenerator.generateDifferentValuesDiff(rowTest, rowProd, this.primaryKeys));
+                    break;
+                }
             }
         }
     }
