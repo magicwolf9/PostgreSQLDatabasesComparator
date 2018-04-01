@@ -130,12 +130,13 @@ export class Comparator {
         for (let key of Object.keys(rowTest)) {
             const value = rowTest[key];
 
-            if(ignoreValuesPattern != "" && !(new RegExp(ignoreValuesPattern, "gi").test(value)) && !(new RegExp(ignoreValuesPattern, "gi").test(rowProd[key]))){
-                if (this.uniqueColumnsInTest.indexOf(key) == -1 && rowProd[key] != value) {
-                    this.myDifferences = this.myDifferences.concat(
-                        this.diffGenerator.generateDifferentValuesDiff(rowTest, rowProd, this.primaryKeys));
-                    break;
-                }
+            if(ignoreValuesPattern != "" && ((new RegExp(ignoreValuesPattern, "gi").test(value)) || (new RegExp(ignoreValuesPattern, "gi").test(rowProd[key]))))
+                continue;
+
+            if (this.uniqueColumnsInTest.indexOf(key) == -1 && rowProd[key] != value) {
+                this.myDifferences = this.myDifferences.concat(
+                    this.diffGenerator.generateDifferentValuesDiff(rowTest, rowProd, this.primaryKeys));
+                break;
             }
         }
     }
