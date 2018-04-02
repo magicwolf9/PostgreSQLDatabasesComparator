@@ -68,18 +68,19 @@ Config sample
         "pathForSQLFiles": "*",
         "comparator_settings": {
             "tablesToCompare": [
-                "***", "***" 
+                "***", "***"
             ],
             "overrideDefaultSettings": [
                 {
                     "table_name": {
                         "searchByPrimaries": false,
-                        "ignorePrimaries": false 
+                        "ignorePrimaries": false
                     }
                 }
             ]
         }
-    }
+    },
+    "ignoreValuesPattern": "" // RegExp describing the pattern of values in columns, which must not be considered different from the second DB (write without //), value for tests - ".*test.*"
 }
 ```
 Responce example:
