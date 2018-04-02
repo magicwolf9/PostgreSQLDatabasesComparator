@@ -494,36 +494,6 @@ describe('Comparator', function () {
             comparator.myDifferences = [];
         });
 
-        it('should ignore not equals values and not create diff about it', function (){
-            const rowTest: any = {column: 'value', column2: 'value'};
-            const rowProd: any = {column: 'value', column2: 'testa'};
-
-            comparator.compareRows(rowTest, rowProd);
-
-            chai.expect(comparator.myDifferences).to.eql([]);
-            comparator.myDifferences = [];
-        });
-
-        it('should ignore not equals values and not create diff about it 2', function (){
-            const rowTest: any = {column: 'astest', column2: 'value'};
-            const rowProd: any = {column: 'testa', column2: 'value'};
-
-            comparator.compareRows(rowTest, rowProd);
-
-            chai.expect(comparator.myDifferences).to.eql([]);
-            comparator.myDifferences = [];
-        });
-
-        it('should ignore not equals values and not create diff about it 3', function (){
-            const rowTest: any = {column: 'astesT', column2: 'value'};
-            const rowProd: any = {column: 'value', column2: 'asTeStDSA'};
-
-            comparator.compareRows(rowTest, rowProd);
-
-            chai.expect(comparator.myDifferences).to.eql([]);
-            comparator.myDifferences = [];
-        });
-
         it('should create diff about not found column and different values', function (){
             const rowTest: any = {column: 'value', column2: 'value2'};
             const rowProd: any = {column: 'value3'};
