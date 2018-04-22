@@ -1,10 +1,10 @@
 import * as _ from 'lodash';
-import {DiffGenerator, IDifference} from "./diff_generator_service";
+import { DiffGenerator, IDifference } from "./diff_generator_service";
 
-import {logger, TEST_DB} from "../../globals";
-import {PROD_DB, ignoreValuesPattern} from "../../globals";
-import {ITableStructure} from "../models/list_tables";
-import {isNull} from "util";
+import { logger, TEST_DB } from "../../globals";
+import { PROD_DB, IGNORE_VALUES_PATTERN } from "../../globals";
+import { ITableStructure } from "../models/list_tables";
+import { isNull } from "util";
 
 export interface ITableInfo {
     tableName: string;
@@ -30,7 +30,8 @@ export class Comparator {
     uniqueColumnsInTest: Array<string>;
     uniqueColumnsInProd: Array<string>;
 
-    public compareTables(tableTestInfo: ITableInfo, tableProdInfo: ITableInfo, comparatorSettings: IComparatorSettings): Array<IDifference> {
+    public compareTables(tableTestInfo: ITableInfo, tableProdInfo: ITableInfo,
+                         comparatorSettings: IComparatorSettings): Array<IDifference> {
 
         this.tableTestInfo = tableTestInfo;
         this.tableProdInfo = tableProdInfo;
@@ -46,7 +47,14 @@ export class Comparator {
         this.checkTablesStructure(tableTestInfo.tableData[0], tableProdInfo.tableData[0]);
 
         tableTestInfo.tableData.forEach(rowTest => {
+            if (this.ignorePatternTest(rowTest)) {
+                return;
+            }
             const rowProd = findRow(rowTest, tableProdInfo);
+
+            if (this.ignorePatternTest(rowProd)) {
+                return;
+            }
 
             if (isNull(rowProd)) {
                 this.myDifferences.push(this.diffGenerator.generateNoSuchRowDiff(rowTest, PROD_DB, this.primaryKeys));
@@ -129,10 +137,6 @@ export class Comparator {
         // check columns for equal values, make getDifferences is not
         for (let key of Object.keys(rowTest)) {
             const value = rowTest[key];
-
-            if(ignoreValuesPattern != "" && ((new RegExp(ignoreValuesPattern, "gi").test(value)) || (new RegExp(ignoreValuesPattern, "gi").test(rowProd[key]))))
-                continue;
-
             if (this.uniqueColumnsInTest.indexOf(key) == -1 && rowProd[key] != value) {
                 this.myDifferences = this.myDifferences.concat(
                     this.diffGenerator.generateDifferentValuesDiff(rowTest, rowProd, this.primaryKeys));
@@ -152,6 +156,19 @@ export class Comparator {
             this.myDifferences = this.myDifferences.concat(
                 this.diffGenerator.generateNoSuchColumns(this.uniqueColumnsInTest, this.uniqueColumnsInProd));
         }
+    }
+
+    ignorePatternTest(row: any): boolean {
+        if (!row) {
+            return false;
+        }
+        const ignoreRegExp = new RegExp(IGNORE_VALUES_PATTERN, "gi");
+        for (let key of Object.keys(row)) {
+            if (IGNORE_VALUES_PATTERN && (ignoreRegExp.test(row[key]))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     deletePrimaryColumnsFromTables() {
@@ -179,8 +196,8 @@ export class Comparator {
         return this.primaryKeys.indexOf(_.snakeCase(key)) != -1;
     }
 
-    compareListOfTablesNamesAndMakeDiffs(testTables: Array<ITableStructure>, prodTables: Array<ITableStructure>)
-        : { tablesToCompare: Array<ITableStructure>, tableDifferences: Array<IDifference> } {
+    compareListOfTablesNamesAndMakeDiffs(testTables: Array<ITableStructure>,
+                                         prodTables: Array<ITableStructure>): { tablesToCompare: Array<ITableStructure>, tableDifferences: Array<IDifference> } {
 
         let differences: Array<IDifference> = [];
         let schema: string;
