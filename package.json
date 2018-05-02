@@ -16,7 +16,6 @@
   "devDependencies": {
     "@types/chai": "^3.5.2",
     "@types/config": "0.0.32",
-    "@types/koa": "^2.0.39",
     "@types/mocha": "^2.2.41",
     "@types/node": "^7.0.23",
     "@types/request-promise": "^4.1.33",
@@ -28,14 +27,13 @@
     "mocha": "^3.5.0",
     "sinon": "^2.2.0",
     "tslint": "^5.1.0",
-    "typescript": "^2.2.2"
+    "typescript": "^2.6.2"
   },
   "dependencies": {
     "accept-language-parser": "^1.4.0",
-    "config": "^1.25.1",
     "dotenv": "^4.0.0",
-    "innots": "0.0.30",
-    "koa-router": "^7.1.1",
+    "config": "^1.30.0",
+    "innots": "^1.1.7",
     "lodash": "^4.17.4",
     "pg": "^6.1.5",
     "pg-pool": "^1.7.1",

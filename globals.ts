@@ -1,6 +1,7 @@
 import * as config from 'config';
-import {PgService} from "innots";
+import {PgService, IAppConfig} from "innots";
 import {logger as innoLogger} from 'innots';
+import { app } from './app';
 
 /* tslint:disable */
 const Pool = require('pg-pool');
@@ -33,5 +34,5 @@ export const TEST_DB: string = 'test';
 export const PROD_DB: string = 'production';
 
 
-const logger = innoLogger.getLogger(config);
+const logger = innoLogger.getLogger(config.get<IAppConfig>('appConfig'));
 export {logger, dbServices};

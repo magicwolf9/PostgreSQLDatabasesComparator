@@ -1,7 +1,7 @@
 import * as config from "config";
 import * as _ from 'lodash';
 import {Controller, PgService} from "innots";
-import {Context} from 'koa';
+import {Context} from "koa";
 import {TableDataModel} from "../models/table_data";
 import {Comparator, IComparatorSettings, ITableInfo} from "../services/comparator_service";
 import {ITableStructure, TablesWithPrimariesListModel} from "../models/list_tables";

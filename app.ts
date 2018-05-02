@@ -1,5 +1,8 @@
 import * as config from 'config';
-import {App} from "innots";
+import { IAppConfig, InnotsApp, PgPool, PgService } from "innots";
 
-import {router} from './app/routes';
-const app = new App(config, router);
+
+import { router } from "./app/routes";
+
+const app = new InnotsApp(config.get<IAppConfig>('appConfig'), router);
+export{app}
