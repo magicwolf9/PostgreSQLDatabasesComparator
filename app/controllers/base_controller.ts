@@ -1,15 +1,15 @@
 import * as config from "config";
 import * as _ from 'lodash';
-import {Controller, PgService} from "innots";
-import {Context} from "koa";
-import {TableDataModel} from "../models/table_data";
-import {Comparator, IComparatorSettings, ITableInfo} from "../services/comparator_service";
-import {ITableStructure, TablesWithPrimariesListModel} from "../models/list_tables";
-import {SQLGenerator} from "../services/sql_generator_service";
-import {Pool} from "pg";
+import { Controller, PgService } from "innots";
+import { Context } from 'koa';
+import { TableDataModel } from "../models/table_data";
+import { Comparator, IComparatorSettings, ITableInfo } from "../services/comparator_service";
+import { ITableStructure, TablesWithPrimariesListModel } from "../models/list_tables";
+import { SQLGenerator } from "../services/sql_generator_service";
+import { Pool } from "pg";
 import * as globals from "../../globals";
-import {PROD_DB, TEST_DB} from "../../globals";
-import {IDifference} from "../services/diff_generator_service";
+import { PROD_DB, TEST_DB } from "../../globals";
+import { DiffGenerator, IDifference } from "../services/diff_generator_service";
 
 const dbServices = globals.dbServices;
 
@@ -31,8 +31,6 @@ export class BaseController extends Controller {
         let {tablesToCompare: tablesToCompare, tablesDifferences: tablesDiffs} = await this.getTablesToCompare();
 
         differences["DDLDifferences"] = tablesDiffs;
-        if (tablesDiffs.length === 0)
-            differences["DDLDifferences"] = `There are no differences in DDL`;
 
         differences["ContentDifferences"] = {};
 
@@ -42,10 +40,19 @@ export class BaseController extends Controller {
 
             if (diffsToAdd.length > 0)
                 differences["ContentDifferences"][tableAndPrimaries.tableName] = diffsToAdd;
+
+            const ddlDiffs = diffsToAdd.filter(diffToAdd => {
+                return [DiffGenerator.NO_SUCH_TABLE, DiffGenerator.NO_SUCH_COLUMN].includes(diffToAdd.type);
+            });
+
+            differences["DDLDifferences"] = differences["DDLDifferences"].concat(ddlDiffs);
         }
 
         let {SQLCommandsTestToProd: testToProd, SQLCommandsProdToTest: prodToTest} =
             this.SQLGenerator.generateSQLAndFillDiffs(differences["ContentDifferences"]);
+
+        if (differences["DDLDifferences"].length === 0)
+            differences["DDLDifferences"] = `There are no differences in DDL`;
 
         differences["SQLTestToProd"] = testToProd;
         differences["SQLProdToTest"] = prodToTest;
@@ -85,7 +92,6 @@ export class BaseController extends Controller {
         return tableDifferences;
     }
 
-
     getComparatorSettingsForTable(tableName: string): IComparatorSettings {
         console.log(tableName);
 
@@ -96,7 +102,6 @@ export class BaseController extends Controller {
 
         const tablesWithOverriddenSettings: Array<any> =
             config.get<Array<any>>(dbServices.currentServiceName + '.comparator_settings.overrideDefaultSettings');
-
 
         for (let table of tablesWithOverriddenSettings) {
             if (table.tableName == tableName) {

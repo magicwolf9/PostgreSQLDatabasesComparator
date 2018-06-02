@@ -29,7 +29,7 @@ prodPgService = new PgService(prodPool);
 /* tslint:enable */
 
 
-export const ignoreValuesPattern: string = config.get<string>('ignoreValuesPattern');
+export const IGNORE_VALUES_PATTERN: string = config.get<string>('ignoreValuesPattern');
 export const TEST_DB: string = 'test';
 export const PROD_DB: string = 'production';
 
