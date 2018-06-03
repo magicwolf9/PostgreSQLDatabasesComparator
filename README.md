@@ -11,9 +11,12 @@ Config sample
 ```JavaScript
 {
     "defaultServiceName": "defService", //default service (group of settings)
-    "port": 8089,
     "url": "/comparator/",
-    "logLevel": "DEBUG",
+    "appConfig": {
+        "port": 8089,
+        "enableLogMiddleware": true,
+        "logLevel": "DEBUG"
+    },
     "defService": {
         "test_db": {
             "schemaName": "*",
