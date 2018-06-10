@@ -31,7 +31,8 @@
             ],
             "overrideDefaultSettings": [
                 {
-                    "table_name": {
+                    "tableName": "",
+                    "settings": {
                         "searchByPrimaries": false,
                         "ignorePrimaries": false
                     }

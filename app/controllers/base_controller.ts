@@ -64,7 +64,7 @@ export class BaseController extends Controller {
     async getTablesToCompare(): Promise<{ tablesToCompare: Array<ITableStructure>, tablesDifferences: Array<IDifference> }> {
         let tablesToCompare: Array<string> =
             config.get<Array<string>>(dbServices.currentServiceName + '.comparator_settings.tablesToCompare');
-
+        console.log(tablesToCompare)
         const tablesToCompareTest: any =
             await TablesWithPrimariesListModel.getTables(dbServices.currentServiceName, TEST_DB, tablesToCompare);
         const tablesToCompareProd: any =
