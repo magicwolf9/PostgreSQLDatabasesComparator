@@ -227,11 +227,13 @@ export class SQLGenerator {
     }
 
     addValueAssigntmentToSQLString(name: string, value): string {
-        if (typeof value != 'number') {
-            return _.snakeCase(name) + ` = '` + value + `', `;
-        } else {
-            return _.snakeCase(name) + ` = ` + value + `, `;
+        if (typeof value == 'number'){
+                return _.snakeCase(name) + ` = ` + value + `, `;
+        } else if(Array.isArray(value)){
+            return _.snakeCase(name) + ` = '{` + value + `}', `;
         }
+
+        return _.snakeCase(name) + ` = '` + value + `', `;
     }
 
     columnIsAnAutoincrementPrimaryKey(primaryKeys: Array<string>, columnName: string, value): boolean {
