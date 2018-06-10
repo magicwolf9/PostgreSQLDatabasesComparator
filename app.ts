@@ -1,5 +1,5 @@
 import * as config from 'config';
-import { IAppConfig, InnotsApp, PgPool, PgService } from "innots";
+import { IAppConfig, InnotsApp} from "innots";
 
 
 import { router } from "./app/routes";

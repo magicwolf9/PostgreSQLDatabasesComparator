@@ -38,10 +38,10 @@ export class TablesWithPrimariesListModel {
             WHERE tablename SIMILAR TO (array_to_string($1::text[], '|'))
             GROUP BY tablename, index
             ORDER BY index;`, [tablesNamesWithPrefixes]);
-        console.log(result)
+
         return result.map(value => {
-            let primaryColumnNames = value.pk_columns;
-            console.log(primaryColumnNames)
+            let primaryColumnNames = value.pkColumns;
+            
             if (isUndefined(primaryColumnNames)) {
                 primaryColumnNames = [];
             }

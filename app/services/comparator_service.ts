@@ -60,6 +60,7 @@ export class Comparator {
                 this.myDifferences.push(this.diffGenerator.generateNoSuchRowDiff(rowTest, PROD_DB, this.primaryKeys));
             } else {
                 tableProdInfo.tableData.splice(tableProdInfo.tableData.indexOf(rowProd), 1);
+                
                 compareRows(rowTest, rowProd);
             }
         });

@@ -1,12 +1,11 @@
 import * as config from "config";
 import * as _ from 'lodash';
-import { Controller, PgService } from "innots";
+import { Controller, PgService, PgPool} from "innots";
 import { Context } from 'koa';
 import { TableDataModel } from "../models/table_data";
 import { Comparator, IComparatorSettings, ITableInfo } from "../services/comparator_service";
 import { ITableStructure, TablesWithPrimariesListModel } from "../models/list_tables";
 import { SQLGenerator } from "../services/sql_generator_service";
-import { Pool } from "pg";
 import * as globals from "../../globals";
 import { PROD_DB, TEST_DB } from "../../globals";
 import { DiffGenerator, IDifference } from "../services/diff_generator_service";
@@ -64,7 +63,7 @@ export class BaseController extends Controller {
     async getTablesToCompare(): Promise<{ tablesToCompare: Array<ITableStructure>, tablesDifferences: Array<IDifference> }> {
         let tablesToCompare: Array<string> =
             config.get<Array<string>>(dbServices.currentServiceName + '.comparator_settings.tablesToCompare');
-        console.log(tablesToCompare)
+
         const tablesToCompareTest: any =
             await TablesWithPrimariesListModel.getTables(dbServices.currentServiceName, TEST_DB, tablesToCompare);
         const tablesToCompareProd: any =
@@ -93,7 +92,6 @@ export class BaseController extends Controller {
     }
 
     getComparatorSettingsForTable(tableName: string): IComparatorSettings {
-        console.log(tableName);
 
         const defaultSettings: IComparatorSettings = {
             searchByPrimaries: true,
@@ -122,8 +120,8 @@ export class BaseController extends Controller {
 
         const dbConfig: any = config.get<any>(serviceName);
 
-        dbServices.test_pool = new Pool(dbConfig.test_db);
-        dbServices.prod_pool = new Pool(dbConfig.prod_db);
+        dbServices.test_pool = new PgPool(dbConfig.test_db);
+        dbServices.prod_pool = new PgPool(dbConfig.prod_db);
 
         dbServices.testPgService = new PgService(dbServices.test_pool);
         dbServices.prodPgService = new PgService(dbServices.prod_pool);
