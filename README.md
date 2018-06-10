@@ -40,9 +40,10 @@ Config sample
             "tablesToCompare": [
                 "***", "***" // list of tables to compare, element can be a full table name (example: table_name) and prefix (example: ref_* it will compare all tables starts with ref_)
             ],
-            "overrideDefaultSettings": [
+            "overrideDefaultSettings": [ // array of tables that needs special comparator settings 
                 {
-                    "table_name": {
+                    "tableName": "*", // full table name
+                    "settings": {
                         "searchByPrimaries": false, //search rows from tables in databases by primary keys, if false it will search 2 rows with fully equals columns values
                         "ignorePrimaries": false //ignore primary keys during compare (for example if it is an autoincrement integer)
                     }
