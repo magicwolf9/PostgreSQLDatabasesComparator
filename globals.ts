@@ -1,9 +1,8 @@
 import * as config from 'config';
-import {PgService} from "innots";
+import {PgService, IAppConfig, PgPool} from "innots";
 import {logger as innoLogger} from 'innots';
 
 /* tslint:disable */
-const Pool = require('pg-pool');
 
 let testPool;
 let prodPool;
@@ -20,8 +19,8 @@ const dbServices = {
     prodPgService: prodPgService,
 };
 
-testPool = new Pool(config.get(dbServices.currentServiceName + '.test_db'));
-prodPool = new Pool(config.get(dbServices.currentServiceName + '.prod_db'));
+testPool = new PgPool(config.get(dbServices.currentServiceName + '.test_db'));
+prodPool = new PgPool(config.get(dbServices.currentServiceName + '.prod_db'));
 
 testPgService = new PgService(testPool);
 prodPgService = new PgService(prodPool);
@@ -33,5 +32,5 @@ export const TEST_DB: string = 'test';
 export const PROD_DB: string = 'production';
 
 
-const logger = innoLogger.getLogger(config);
+const logger = innoLogger.getLogger(config.get<IAppConfig>('appConfig'));
 export {logger, dbServices};

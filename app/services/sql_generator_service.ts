@@ -201,7 +201,7 @@ export class SQLGenerator {
 
                 delete rowTest[key];
 
-            } else if (rowTest[key] == rowProd[key]) {
+            } else if (_.isEqual(rowTest[key], rowProd[key])) {
 
                 delete rowTest[key];
                 delete rowProd[key];
@@ -219,19 +219,27 @@ export class SQLGenerator {
     addValueToSQLString(value): string {
         if (isNull(value) || isUndefined(value)) {
             return `default, `;
-        } else if (typeof value != 'number') {
-            return `'` + value + `', `;
-        } else {
-            return value + `, `;
+        } else if (typeof value == 'number'){
+            return value.toString() + `, `;
+        } else if(Array.isArray(value)){
+            return `'{` + value.toString() + `}', `;
+        } else if(typeof value == 'object'){
+            return `'` + JSON.stringify(value) + `', `;
         }
+
+        return `'` + value.toString() + `', `;
     }
 
     addValueAssigntmentToSQLString(name: string, value): string {
-        if (typeof value != 'number') {
-            return _.snakeCase(name) + ` = '` + value + `', `;
-        } else {
-            return _.snakeCase(name) + ` = ` + value + `, `;
+        if (typeof value == 'number'){
+            return _.snakeCase(name) + ` = ` + value.toString() + `, `;
+        } else if(Array.isArray(value)){
+            return _.snakeCase(name) + ` = '{` + value.toString() + `}', `;
+        } else if(typeof value == 'object'){
+            return _.snakeCase(name) + ` = '` + JSON.stringify(value) + `', `;
         }
+
+        return _.snakeCase(name) + ` = '` + value.toString() + `', `;
     }
 
     columnIsAnAutoincrementPrimaryKey(primaryKeys: Array<string>, columnName: string, value): boolean {

@@ -41,7 +41,7 @@ export class TablesWithPrimariesListModel {
 
         return result.map(value => {
             let primaryColumnNames = value.pkColumns;
-
+            
             if (isUndefined(primaryColumnNames)) {
                 primaryColumnNames = [];
             }

@@ -16,3 +16,5 @@ config/production.json
 *.js
 *.js.map
 !ecosystem.config.sample.js
+.vscode/launch.json
+.vscode/tasks.json
