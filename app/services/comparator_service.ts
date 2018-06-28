@@ -1,10 +1,10 @@
 import * as _ from 'lodash';
 import { DiffGenerator, IDifference } from "./diff_generator_service";
 
-import { logger, TEST_DB } from "../../globals";
+import { TEST_DB } from "../../globals";
 import { PROD_DB, IGNORE_VALUES_PATTERN } from "../../globals";
 import { ITableStructure } from "../models/list_tables";
-import {isNull, isUndefined} from "util";
+import {isNull} from "util";
 
 export interface ITableInfo {
     tableName: string;
