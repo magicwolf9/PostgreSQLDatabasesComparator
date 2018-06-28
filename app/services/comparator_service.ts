@@ -144,10 +144,10 @@ export class Comparator {
     }
 
     checkTablesStructure(rowTest: any, rowProd: any) {
-        const row1Columns: Array<string> = isNull(rowTest) || isUndefined(rowTest) ? null : Object.keys(rowTest);
-        const row2Columns: Array<string> = isNull(rowProd) || isUndefined(rowProd) ? null : Object.keys(rowProd);
+        const row1Columns: Array<string> = !rowTest ? null : Object.keys(rowTest);
+        const row2Columns: Array<string> = !rowProd ? null : Object.keys(rowProd);
 
-        if(isNull(row1Columns) || isNull(row2Columns)) return;
+        if(!row1Columns || !row2Columns) return;
 
         this.uniqueColumnsInTest = row1Columns.filter(val => row2Columns.indexOf(val) == -1);
         this.uniqueColumnsInProd = row2Columns.filter(val => row1Columns.indexOf(val) == -1);
