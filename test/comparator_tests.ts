@@ -184,7 +184,18 @@ describe('Comparator', function () {
                 ignorePrimaries: false
             };
 
-            chai.expect(comparator.compareTables(tableTestInfo, tableProdInfo, comparatorSettings)).to.eql([]);
+            const expectedDiff: IDifference = {
+                type: DiffGenerator.NO_SUCH_ROW,
+
+                schema: PROD_DB,
+                primaryKeys: ['column'],
+                table: tableName,
+
+                valueInTest: {column: 'value', column2: 'value2'},
+                valueInProd: null,
+            };
+
+            chai.expect(comparator.compareTables(tableTestInfo, tableProdInfo, comparatorSettings)).to.eql([expectedDiff]);
         });
 
         it('should return no diffs on empty tables', function () {
@@ -208,17 +219,7 @@ describe('Comparator', function () {
                 ignorePrimaries: false
             };
 
-            const expectedDiff: IDifference = {
-                type: DiffGenerator.DIFFERENT_VALUES,
-
-                primaryKeys: ['column'],
-                table: tableName,
-
-                valueInTest: {column: 'value', column2: 'value2'},
-                valueInProd: null,
-            };
-
-            chai.expect(comparator.compareTables(tableTestInfo, tableProdInfo, comparatorSettings)).to.eql([expectedDiff]);
+            chai.expect(comparator.compareTables(tableTestInfo, tableProdInfo, comparatorSettings)).to.eql([]);
         });
 
         it('should return diff on different tables values with settings to search by values', function () {
